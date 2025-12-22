@@ -28,7 +28,7 @@ const Payroll = () => {
   ];
 
   return (
-    <Card title="Payroll Management" bordered={false}>
+    <Card title="Payroll Management" variant="outlined">
       <Table dataSource={data} columns={columns} pagination={false} />
     </Card>
   );

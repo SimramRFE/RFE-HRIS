@@ -5,7 +5,7 @@ const Performance = () => {
   const data = [
     { key: 1, name: "Harsh Kumar", rating: 92, remarks: "Excellent" },
     { key: 2, name: "Divya Sharma", rating: 78, remarks: "Good" },
-    { key: 3, name: "Hero Singh", rating: 66, remarks: "Average" },
+    { key: 3, name: "Neha Singh", rating: 66, remarks: "Average" },
   ];
 
   const columns = [

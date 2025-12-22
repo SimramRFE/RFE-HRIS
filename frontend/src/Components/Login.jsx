@@ -2,49 +2,42 @@ import React, { useState } from "react";
 import { Tabs, Form, Input, Button, message } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+import { authAPI } from "../services/api";
+import UserLogin from "./UserLogin";
 
 const Login = () => {
   const [loginType, setLoginType] = useState("account");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Demo credentials
-  const demoUser = {
-    username: "user123",
-    password: "Password@123",
-  };
-
-  const handleSubmit = (values) => {
+  const handleSubmit = async (values) => {
     const { username, password } = values;
 
-    // Validation for username
-    const usernameRegex = /^[a-z0-9]+$/; // lowercase letters and numbers only
-    if (!usernameRegex.test(username)) {
-      message.error(
-        "Username must contain only lowercase letters and numbers!"
-      );
-      return;
-    }
-
-    // Validation for password
-    const passwordRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
-    if (!passwordRegex.test(password)) {
-      message.error(
-        "Password must include uppercase, lowercase, number, special character and be at least 8 characters long!"
-      );
-      return;
-    }
-
-    // Check demo login
-    if (
-      username === demoUser.username &&
-      password === demoUser.password
-    ) {
-      message.success("Login successful!");
-      localStorage.setItem("auth", "true");
-      navigate("/dashboard");
-    } else {
-      message.error("Invalid username or password!");
+    try {
+      setLoading(true);
+      const response = await authAPI.login({ username, password });
+      
+      if (response.data.success) {
+        const { token, isFirstLogin } = response.data.data;
+        
+        // Store only token
+        localStorage.setItem("token", token);
+        localStorage.setItem("auth", "true");
+        
+        message.success("Login successful!");
+        
+        // Check if first-time login
+        if (isFirstLogin) {
+          navigate("/password-change");
+        } else {
+          navigate("/dashboard");
+        }
+      }
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || "Login failed. Please try again.";
+      message.error(errorMsg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -70,51 +63,67 @@ const Login = () => {
           centered
           activeKey={loginType}
           onChange={(key) => setLoginType(key)}
-          className="text-white"
-          items={[{ key: "account", label: "Account Login" }]}
+          className="custom-white-tabs"
+          items={[
+            { key: "account", label: "Admin Login" },
+            { key: "manager", label: "Manager Login" },
+          ]}
         />
 
-        <Form name="login" onFinish={handleSubmit} layout="vertical">
-          {loginType === "account" && (
-            <>
-              <Form.Item
-                name="username"
-                rules={[
-                  { required: true, message: "Please enter your username!" },
-                ]}
-              >
-                <Input
-                  prefix={<UserOutlined />}
-                  size="large"
-                  placeholder="Username"
-                />
-              </Form.Item>
+        {loginType === "account" ? (
+          <Form name="login" onFinish={handleSubmit} layout="vertical">
+            <Form.Item
+              name="username"
+              rules={[
+                { required: true, message: "Please enter your username!" }
+              ]}
+            >
+              <Input
+                prefix={<UserOutlined />}
+                size="large"
+                placeholder="Username"
+              />
+            </Form.Item>
 
-              <Form.Item
-                name="password"
-                rules={[
-                  { required: true, message: "Please enter your password!" },
-                ]}
-              >
-                <Input.Password
-                  prefix={<LockOutlined />}
-                  size="large"
-                  placeholder="Password"
-                />
-              </Form.Item>
-            </>
-          )}
+            <Form.Item
+              name="password"
+              rules={[
+                { required: true, message: "Please enter your password!" },
+              ]}
+            >
+              <Input.Password
+                prefix={<LockOutlined />}
+                size="large"
+                placeholder="Password"
+              />
+            </Form.Item>
 
-          <Button
-            type="primary"
-            htmlType="submit"
-            size="large"
-            block
-            className="rounded-lg"
-          >
-            Login
-          </Button>
-        </Form>
+            <Button
+              type="primary"
+              htmlType="submit"
+              size="large"
+              block
+              loading={loading}
+              className="rounded-lg"
+            >
+              Login
+            </Button>
+
+            <div className="text-center mt-4">
+              <span style={{ color: "rgba(255,255,255,0.8)" }}>
+                Don't have an account?{" "}
+                <a 
+                  onClick={() => navigate("/signup")}
+                  style={{ color: "white", fontWeight: "bold", textDecoration: "underline", cursor: "pointer" }}
+                >
+                  Sign up here
+                </a>
+              </span>
+            </div>
+          </Form>
+        ) : (
+          <UserLogin />
+        )}
       </div>
     </div>
   );

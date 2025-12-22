@@ -19,3 +19,16 @@
   color: #ffffff;
   padding: 10px 10px;
 }
+
+/* White text for login tabs */
+.custom-white-tabs .ant-tabs-tab {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.custom-white-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: white !important;
+}
+
+.custom-white-tabs .ant-tabs-ink-bar {
+  background: white !important;
+}
