@@ -179,7 +179,7 @@ const Employee = () => {
     {
       title: "Contact",
       key: "contact",
-      width: 180,
+      width: 190,
       render: (_, record) => (
         <div>
           <div style={{ marginBottom: 4 }}>
@@ -282,7 +282,7 @@ const Employee = () => {
     {
       title: "Actions",
       key: "actions",
-      fixed: "right",
+      // fixed: "right",  
       width: 280,
       render: (_, record) => (
         <Space>
@@ -321,7 +321,7 @@ const Employee = () => {
     {
       title: "Customize",
       key: "customize",
-      fixed: "right",
+      // fixed: "right",
       width: 130,
       render: () => (
         <Button

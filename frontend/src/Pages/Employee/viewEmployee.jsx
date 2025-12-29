@@ -499,7 +499,7 @@ const ViewEmployee = ({ id, open, onClose }) => {
           </Space>
         )
       }
-      width={850}
+      width={780}
       open={open}
       onClose={onClose}
       closeIcon={<CloseOutlined />}
