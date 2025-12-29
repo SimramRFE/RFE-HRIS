@@ -9,6 +9,26 @@ const generateToken = (id) => {
   });
 };
 
+// @desc    Check if admin exists
+// @route   GET /api/auth/admin-exists
+// @access  Public
+exports.checkAdminExists = async (req, res) => {
+  try {
+    const adminExists = await User.findOne({ role: 'admin' });
+    res.status(200).json({
+      success: true,
+      data: {
+        exists: !!adminExists
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error checking admin existence'
+    });
+  }
+};
+
 // @desc    Register user
 // @route   POST /api/auth/signup
 // @access  Public

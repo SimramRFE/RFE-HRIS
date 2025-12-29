@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, Form, Input, Button, message } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
@@ -8,7 +8,23 @@ import UserLogin from "./UserLogin";
 const Login = () => {
   const [loginType, setLoginType] = useState("account");
   const [loading, setLoading] = useState(false);
+  const [adminExists, setAdminExists] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    checkIfAdminExists();
+  }, []);
+
+  const checkIfAdminExists = async () => {
+    try {
+      const response = await authAPI.checkAdminExists();
+      if (response.data.success) {
+        setAdminExists(response.data.data.exists);
+      }
+    } catch (error) {
+      console.error("Error checking admin existence:", error);
+    }
+  };
 
   const handleSubmit = async (values) => {
     const { username, password } = values;
@@ -109,17 +125,19 @@ const Login = () => {
               Login
             </Button>
 
-            <div className="text-center mt-4">
-              <span style={{ color: "rgba(255,255,255,0.8)" }}>
-                Don't have an account?{" "}
-                <a 
-                  onClick={() => navigate("/signup")}
-                  style={{ color: "white", fontWeight: "bold", textDecoration: "underline", cursor: "pointer" }}
-                >
-                  Sign up here
-                </a>
-              </span>
-            </div>
+            {!adminExists && (
+              <div className="text-center mt-4">
+                <span style={{ color: "rgba(255,255,255,0.8)" }}>
+                  Don't have an account?{" "}
+                  <a 
+                    onClick={() => navigate("/signup")}
+                    style={{ color: "white", fontWeight: "bold", textDecoration: "underline", cursor: "pointer" }}
+                  >
+                    Sign up here
+                  </a>
+                </span>
+              </div>
+            )}
           </Form>
         ) : (
           <UserLogin />

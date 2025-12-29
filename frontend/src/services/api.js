@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'www.gportalcms.com/api';
 
 // Create axios instance
 const api = axios.create({
@@ -84,6 +84,7 @@ export const authAPI = {
   changePassword: (data) => api.put('/auth/change-password', data),
   getMe: () => api.get('/auth/me'),
   getManagerMe: () => managerApi.get('/auth/manager-me'),
+  checkAdminExists: () => api.get('/auth/admin-exists'),
 };
 
 // Employee API

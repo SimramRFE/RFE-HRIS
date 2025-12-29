@@ -7,7 +7,8 @@ const {
   changePassword,
   firstLoginPasswordChange,
   getMe,
-  getManagerMe
+  getManagerMe,
+  checkAdminExists
 } = require('../controllers/authController');
 const { protect, protectManager } = require('../middleware/auth');
 
@@ -15,6 +16,7 @@ const { protect, protectManager } = require('../middleware/auth');
 router.post('/signup', signup);
 router.post('/login', login);
 router.post('/manager-login', managerLogin);
+router.get('/admin-exists', checkAdminExists);
 
 // Protected routes
 router.put('/first-login-password-change', protect, firstLoginPasswordChange);
