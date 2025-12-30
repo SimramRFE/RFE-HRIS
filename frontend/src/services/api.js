@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'www.gportalcms.com/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://gportalcms.com/api';
 
 // Create axios instance
 const api = axios.create({
