@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Form, Input, Button, message } from "antd";
+import { Form, Input, Button, message, Alert } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { authAPI } from "../services/api";
@@ -7,12 +7,14 @@ import { authAPI } from "../services/api";
 const UserLogin = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [loginError, setLoginError] = useState("");
 
   const handleSubmit = async (values) => {
     const { username, password } = values;
 
     try {
       setLoading(true);
+      setLoginError("");
       const response = await authAPI.managerLogin({ username, password });
       
       if (response.data.success) {
@@ -27,6 +29,7 @@ const UserLogin = () => {
       }
     } catch (error) {
       const errorMsg = error.response?.data?.message || "Login failed. Please try again.";
+      setLoginError(errorMsg);
       message.error(errorMsg);
     } finally {
       setLoading(false);
@@ -35,6 +38,14 @@ const UserLogin = () => {
 
   return (
     <Form name="managerLogin" onFinish={handleSubmit} layout="vertical">
+      {loginError && (
+        <Alert
+          type="error"
+          message={loginError}
+          showIcon
+          className="mb-4"
+        />
+      )}
       <Form.Item
         name="username"
         rules={[

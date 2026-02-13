@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Tabs, Form, Input, Button, message } from "antd";
+import { Tabs, Form, Input, Button, message, Alert } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { authAPI } from "../services/api";
@@ -9,6 +9,7 @@ const Login = () => {
   const [loginType, setLoginType] = useState("account");
   const [loading, setLoading] = useState(false);
   const [adminExists, setAdminExists] = useState(false);
+  const [loginError, setLoginError] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,6 +32,7 @@ const Login = () => {
 
     try {
       setLoading(true);
+      setLoginError("");
       const response = await authAPI.login({ username, password });
       
       if (response.data.success) {
@@ -51,6 +53,7 @@ const Login = () => {
       }
     } catch (error) {
       const errorMsg = error.response?.data?.message || "Login failed. Please try again.";
+      setLoginError(errorMsg);
       message.error(errorMsg);
     } finally {
       setLoading(false);
@@ -88,6 +91,14 @@ const Login = () => {
 
         {loginType === "account" ? (
           <Form name="login" onFinish={handleSubmit} layout="vertical">
+            {loginError && (
+              <Alert
+                type="error"
+                message={loginError}
+                showIcon
+                className="mb-4"
+              />
+            )}
             <Form.Item
               name="username"
               rules={[

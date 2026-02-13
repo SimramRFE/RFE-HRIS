@@ -113,8 +113,17 @@ const Signup = () => {
             name="password"
             rules={[
               { required: true, message: "Please enter password!" },
-              { min: 6, message: "Password must be at least 6 characters!" }
+              { min: 8, message: "Password must be at least 8 characters!" },
+              {
+                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/,
+                message: "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&#)!"
+              }
             ]}
+            extra={
+              <Typography.Text style={{ color: "rgba(255,255,255,0.7)", fontSize: "12px" }}>
+                Password must be 8+ characters with uppercase, lowercase, number & special character
+              </Typography.Text>
+            }
           >
             <Input.Password
               prefix={<LockOutlined />}

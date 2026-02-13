@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://gportalcms.com/api';
+//  const API_URL = import.meta.env.VITE_API_URL || 'https://gportalcms.com/api';
+const API_URL = 'http://localhost:5000/api';
 
 // Create axios instance
 const api = axios.create({
@@ -51,10 +52,15 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      const requestUrl = error.config?.url || '';
+      const isAuthRequest = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/manager-login');
+
+      if (!isAuthRequest) {
+        // Token expired or invalid
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -65,11 +71,16 @@ managerApi.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem('managerToken');
-      localStorage.removeItem('manager');
-      localStorage.removeItem('managerAuth');
-      window.location.href = '/login';
+      const requestUrl = error.config?.url || '';
+      const isAuthRequest = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/manager-login');
+
+      if (!isAuthRequest) {
+        // Token expired or invalid
+        localStorage.removeItem('managerToken');
+        localStorage.removeItem('manager');
+        localStorage.removeItem('managerAuth');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
