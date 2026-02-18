@@ -60,19 +60,27 @@ exports.getTeamManager = async (req, res) => {
 // @access  Private (Admin/HR)
 exports.createTeamManager = async (req, res) => {
   try {
-    // Add created by user
     req.body.createdBy = req.user.id;
+    delete req.body.confirmPassword;
 
-    // Check if employee exists and is active
-    const employee = await Employee.findById(req.body.employee);
-    if (!employee || !employee.isActive) {
-      return res.status(404).json({
-        success: false,
-        message: 'Employee not found or inactive'
-      });
+    if (req.body.employee) {
+      const employee = await Employee.findById(req.body.employee);
+      if (!employee || !employee.isActive) {
+        return res.status(404).json({
+          success: false,
+          message: 'Employee not found or inactive'
+        });
+      }
     }
 
-    // Hash password before saving
+    if (!req.body.teamName && req.body.username) {
+      req.body.teamName = `${req.body.username} Team`;
+    }
+
+    if (req.body.budgetAllocated === undefined) {
+      req.body.budgetAllocated = 0;
+    }
+
     if (req.body.password) {
       const salt = await bcrypt.genSalt(10);
       req.body.password = await bcrypt.hash(req.body.password, salt);
@@ -80,7 +88,6 @@ exports.createTeamManager = async (req, res) => {
 
     const teamManager = await TeamManager.create(req.body);
 
-    // Populate employee details before sending response
     await teamManager.populate('employee', 'name employeeCode email mobileNo department');
 
     res.status(201).json({
@@ -91,7 +98,6 @@ exports.createTeamManager = async (req, res) => {
   } catch (error) {
     console.error('Error creating team manager:', error);
 
-    // Handle duplicate key error
     if (error.code === 11000) {
       const field = Object.keys(error.keyPattern)[0];
       return res.status(400).json({
@@ -100,7 +106,6 @@ exports.createTeamManager = async (req, res) => {
       });
     }
 
-    // Handle validation errors
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(err => err.message);
       return res.status(400).json({

@@ -15,17 +15,29 @@ const UserLogin = () => {
     try {
       setLoading(true);
       setLoginError("");
-      const response = await authAPI.managerLogin({ username, password });
+      const response = await authAPI.login({ username, password });
       
       if (response.data.success) {
-        const { token } = response.data.data;
-        
-        // Store only manager token
-        localStorage.setItem("managerToken", token);
-        localStorage.setItem("managerAuth", "true");
+        const { token, role } = response.data.data;
+
+        if (role !== "manager") {
+          message.error("Only manager account is allowed here");
+          return;
+        }
+
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("auth");
+        sessionStorage.removeItem("user");
+        sessionStorage.removeItem("managerToken");
+        sessionStorage.removeItem("managerAuth");
+        sessionStorage.removeItem("manager");
+
+        sessionStorage.setItem("managerToken", token);
+        sessionStorage.setItem("managerAuth", "true");
+        sessionStorage.setItem("manager", JSON.stringify(response.data.data));
         
         message.success("Manager login successful!");
-        navigate("/manager-dashboard");
+        navigate("/employees");
       }
     } catch (error) {
       const errorMsg = error.response?.data?.message || "Login failed. Please try again.";

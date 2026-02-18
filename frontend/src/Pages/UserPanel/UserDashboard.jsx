@@ -83,7 +83,7 @@ const UserDashboard = () => {
           />
           <div>
             <Title level={2} style={{ margin: 0, color: "#1a1a2e" }}>
-              Welcome, {currentUser.name || "Employee"}
+             {currentUser.name || "Employee"}
             </Title>
             <p style={{ color: "#666", margin: "8px 0 0 0", fontSize: "16px" }}>
               {currentUser.role || "N/A"} - {currentUser.department || "N/A"}

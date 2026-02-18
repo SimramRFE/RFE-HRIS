@@ -1,4 +1,80 @@
 const Employee = require('../models/Employee');
+const VisaCountry = require('../models/VisaCountry');
+
+const DEFAULT_VISA_COUNTRIES = ['UAE', 'India', 'USA', 'UK', 'Canada'];
+
+const normalizeCountryName = (country) => {
+  if (typeof country !== 'string') {
+    return '';
+  }
+
+  return country.trim();
+};
+
+const ensureVisaCountryExists = async (country, userId) => {
+  const normalizedCountry = normalizeCountryName(country);
+
+  if (!normalizedCountry) {
+    return;
+  }
+
+  const existingCountry = await VisaCountry.findOne({
+    name: { $regex: `^${normalizedCountry}$`, $options: 'i' }
+  });
+
+  if (!existingCountry) {
+    await VisaCountry.create({
+      name: normalizedCountry,
+      createdBy: userId
+    });
+  }
+};
+
+const sanitizeEmployeePayload = (payload = {}) => {
+  const sanitized = { ...payload };
+
+  Object.keys(sanitized).forEach((field) => {
+    if (typeof sanitized[field] === 'string') {
+      sanitized[field] = sanitized[field].trim();
+      if (sanitized[field] === '') {
+        sanitized[field] = undefined;
+      }
+    }
+
+    if (Array.isArray(sanitized[field]) && sanitized[field].length === 0) {
+      sanitized[field] = undefined;
+    }
+  });
+
+  if (Array.isArray(sanitized.countryOfVisaIssuance)) {
+    sanitized.countryOfVisaIssuance = sanitized.countryOfVisaIssuance[0] || '';
+  }
+
+  sanitized.countryOfVisaIssuance = normalizeCountryName(sanitized.countryOfVisaIssuance);
+
+  if (!sanitized.countryOfVisaIssuance) {
+    sanitized.countryOfVisaIssuance = undefined;
+  }
+
+  if (Array.isArray(sanitized.documents)) {
+    sanitized.documents = sanitized.documents
+      .map((doc) => ({
+        name: typeof doc?.name === 'string' ? doc.name.trim() : '',
+        url: typeof doc?.url === 'string' ? doc.url.trim() : '',
+        size: Number.isFinite(Number(doc?.size)) ? Number(doc.size) : undefined,
+        type: typeof doc?.type === 'string' ? doc.type.trim() : undefined,
+        uploadDate: doc?.uploadDate || undefined
+      }))
+      .filter((doc) => doc.name && doc.url);
+  }
+
+  if (typeof sanitized.salary === 'string') {
+    const parsedSalary = Number(sanitized.salary);
+    sanitized.salary = Number.isNaN(parsedSalary) ? sanitized.salary : parsedSalary;
+  }
+
+  return sanitized;
+};
 
 // @desc    Get all employees
 // @route   GET /api/employees
@@ -54,24 +130,17 @@ exports.getEmployee = async (req, res) => {
 // @access  Private (Admin/HR)
 exports.createEmployee = async (req, res) => {
   try {
+    req.body = sanitizeEmployeePayload(req.body);
+
     // Add created by user
     req.body.createdBy = req.user.id;
-
-    // Convert empty email strings to undefined to avoid duplicate key error
-    if (req.body.email === '') {
-      req.body.email = undefined;
-    }
-    if (req.body.officeEmail === '') {
-      req.body.officeEmail = undefined;
-    }
-    if (req.body.alternateEmail === '') {
-      req.body.alternateEmail = undefined;
-    }
 
     console.log('Creating employee with data:', JSON.stringify(req.body, null, 2));
     console.log('Documents type:', typeof req.body.documents);
     console.log('Documents is array:', Array.isArray(req.body.documents));
     console.log('Documents value:', req.body.documents);
+
+    await ensureVisaCountryExists(req.body.countryOfVisaIssuance, req.user.id);
 
     const employee = await Employee.create(req.body);
 
@@ -97,7 +166,7 @@ exports.createEmployee = async (req, res) => {
       const messages = Object.values(error.errors).map(err => err.message);
       return res.status(400).json({
         success: false,
-        message: 'Validation error',
+        message: 'Invalid employee data',
         errors: messages
       });
     }
@@ -115,6 +184,8 @@ exports.createEmployee = async (req, res) => {
 // @access  Private (Admin/HR)
 exports.updateEmployee = async (req, res) => {
   try {
+    req.body = sanitizeEmployeePayload(req.body);
+
     let employee = await Employee.findById(req.params.id);
 
     if (!employee || !employee.isActive) {
@@ -124,16 +195,7 @@ exports.updateEmployee = async (req, res) => {
       });
     }
 
-    // Convert empty email strings to undefined to avoid duplicate key error
-    if (req.body.email === '') {
-      req.body.email = undefined;
-    }
-    if (req.body.officeEmail === '') {
-      req.body.officeEmail = undefined;
-    }
-    if (req.body.alternateEmail === '') {
-      req.body.alternateEmail = undefined;
-    }
+    await ensureVisaCountryExists(req.body.countryOfVisaIssuance, req.user.id);
 
     employee = await Employee.findByIdAndUpdate(
       req.params.id,
@@ -162,6 +224,34 @@ exports.updateEmployee = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error updating employee',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get visa countries for dropdown
+// @route   GET /api/employees/visa-countries
+// @access  Private
+exports.getVisaCountries = async (req, res) => {
+  try {
+    const countriesFromDb = await VisaCountry.find({}).sort({ name: 1 });
+
+    const combinedCountries = [
+      ...DEFAULT_VISA_COUNTRIES,
+      ...countriesFromDb.map((country) => country.name)
+    ];
+
+    const uniqueCountries = [...new Set(combinedCountries.map((country) => normalizeCountryName(country)).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b));
+
+    res.status(200).json({
+      success: true,
+      data: uniqueCountries
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching visa countries',
       error: error.message
     });
   }

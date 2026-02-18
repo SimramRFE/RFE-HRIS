@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Modal,
   Form,
@@ -29,6 +29,7 @@ import dayjs from "dayjs";
 const { Option } = Select;
 const { Title, Text } = Typography;
 const { TextArea } = Input;
+const DEFAULT_VISA_COUNTRIES = ["UAE", "India", "USA", "UK", "Canada"];
 
 const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
   const [form] = Form.useForm();
@@ -36,6 +37,33 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("1");
   const [fileList, setFileList] = useState([]);
+  const [visaCountryOptions, setVisaCountryOptions] = useState(DEFAULT_VISA_COUNTRIES);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const fetchVisaCountries = async () => {
+      try {
+        const response = await employeeAPI.getVisaCountries();
+        const countriesFromApi = Array.isArray(response?.data?.data)
+          ? response.data.data
+          : [];
+
+        const mergedCountries = [...new Set([...DEFAULT_VISA_COUNTRIES, ...countriesFromApi])]
+          .map((country) => (typeof country === "string" ? country.trim() : ""))
+          .filter(Boolean)
+          .sort((a, b) => a.localeCompare(b));
+
+        setVisaCountryOptions(mergedCountries.length ? mergedCountries : DEFAULT_VISA_COUNTRIES);
+      } catch (error) {
+        setVisaCountryOptions(DEFAULT_VISA_COUNTRIES);
+      }
+    };
+
+    fetchVisaCountries();
+  }, [open]);
 
   const handleSubmit = async (values) => {
     try {
@@ -73,6 +101,12 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
       // Convert date objects to strings
       const employeeData = { ...values };
 
+      Object.keys(employeeData).forEach((key) => {
+        if (employeeData[key] === '') {
+          employeeData[key] = undefined;
+        }
+      });
+
       // Add uploaded documents to employee data
       employeeData.documents = uploadedDocuments;
 
@@ -89,6 +123,21 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
         }
       });
 
+      if (Array.isArray(employeeData.countryOfVisaIssuance)) {
+        employeeData.countryOfVisaIssuance = employeeData.countryOfVisaIssuance[0] || "";
+      }
+
+      Object.keys(employeeData).forEach((field) => {
+        if (typeof employeeData[field] === 'string') {
+          const trimmed = employeeData[field].trim();
+          employeeData[field] = trimmed === '' ? undefined : trimmed;
+        }
+
+        if (Array.isArray(employeeData[field]) && employeeData[field].length === 0) {
+          employeeData[field] = undefined;
+        }
+      });
+
       // Remove confirmPassword from the data
       delete employeeData.confirmPassword;
 
@@ -100,15 +149,18 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
         setEmployeeStatus("Tourist");
         setActiveTab("1");
         setFileList([]);
-        onSuccess();
-        onCancel();
+        onCancel?.();
+        onSuccess?.();
       }
     } catch (error) {
-      console.error('Error details:', error.response || error);
+      console.error('Error details:', error.response?.data || error.response || error);
       let errorMsg = "Failed to add employee";
+      const backendErrors = error.response?.data?.errors;
 
       if (error.response?.status === 403) {
         errorMsg = `Access denied. Only admin or HR can add employees.`;
+      } else if (Array.isArray(backendErrors) && backendErrors.length > 0) {
+        errorMsg = backendErrors.join(', ');
       } else {
         errorMsg = error.response?.data?.message || "Failed to add employee";
       }
@@ -129,15 +181,15 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
       ),
       children: (
         <>
-          <Title level={5} style={{ marginTop: 0, marginBottom: 16, color: "#1a1a2e" }}>
+          {/* <Title level={5} style={{ marginTop: 0, marginBottom: 16, color: "#1a1a2e" }}>
             Basic Information
-          </Title>
+          </Title> */}
+          <Divider orientation="left">Basic Information</Divider>
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Employee Name"
                 name="name"
-                rules={[{ required: true, message: "Please enter employee name" }]}
               >
                 <Input placeholder="Enter full name" />
               </Form.Item>
@@ -146,7 +198,6 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
               <Form.Item
                 label="Employee Code"
                 name="employeeCode"
-                rules={[{ required: true, message: "Please enter employee code" }]}
               >
                 <Input placeholder="Enter employee code" />
               </Form.Item>
@@ -159,11 +210,16 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
                 label="Mobile Number"
                 name="mobileNo"
                 rules={[
-                  { required: true, message: "Please enter mobile number" },
-                  { pattern: /^[0-9]{10}$/, message: "Enter valid 10-digit number" }
+                  {
+                    pattern: /^\+\d{1,4}\d{10}$/,
+                    message: "Use format like +971501234567 (10 digits after country code)",
+                  },
                 ]}
               >
-                <Input placeholder="Enter mobile number" maxLength={10} />
+                <Input
+                  placeholder="Enter mobile number (e.g. +971501234567)"
+                  maxLength={15}
+                />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
@@ -193,7 +249,6 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
               <Form.Item
                 label="Date of Joining"
                 name="dateOfJoining"
-                rules={[{ required: true, message: "Please select joining date" }]}
               >
                 <DatePicker style={{ width: '100%' }} format="DD-MM-YYYY" />
               </Form.Item>
@@ -201,27 +256,35 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
           </Row>
 
           <Row gutter={16}>
+       
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Department"
                 name="department"
-                rules={[{ required: true, message: "Please select department" }]}
+                normalize={(value) => (Array.isArray(value) ? value[0] : value)}
               >
-                <Select placeholder="Select department">
-                  <Option value="HR">HR</Option>
-                  <Option value="Finance">Finance</Option>
-                  <Option value="IT">IT</Option>
-                  <Option value="Operations">Operations</Option>
-                  <Option value="Sales">Sales</Option>
-                  <Option value="Marketing">Marketing</Option>
-                </Select>
+                <Select
+                  mode="tags"
+                  maxCount={1}
+                  placeholder="Select or type department"
+                  style={{ width: "100%" }}
+                  tokenSeparators={[","]}
+                  options={[
+                    { value: "HR", label: "HR" },
+                    { value: "Finance", label: "Finance" },
+                    { value: "IT", label: "IT" },
+                    { value: "Operations", label: "Operations" },
+                    { value: "Sales", label: "Sales" },
+                    { value: "Marketing", label: "Marketing" },
+                  ]}
+                />
               </Form.Item>
             </Col>
+
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Company"
                 name="company"
-                rules={[{ required: true, message: "Please select company" }]}
               >
                 <Select placeholder="Select company">
                   <Option value="RFE">RFE</Option>
@@ -237,7 +300,6 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
               <Form.Item
                 label="Employee Status"
                 name="employeeStatus"
-                rules={[{ required: true, message: "Please select employee status" }]}
               >
                 <Select
                   placeholder="Select status"
@@ -252,7 +314,6 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
               <Form.Item
                 label="Employee Role"
                 name="role"
-                rules={[{ required: true, message: "Please enter employee role" }]}
               >
                 <Input placeholder="Enter employee role" />
               </Form.Item>
@@ -266,7 +327,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
               <Form.Item
                 label="Gender"
                 name="gender"
-                rules={[{ required: true, message: "Please select gender" }]}
+              // rules={[{ required: true, message: "Please select gender" }]}
               >
                 <Select placeholder="Select gender">
                   <Option value="Male">Male</Option>
@@ -279,7 +340,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
               <Form.Item
                 label="Nationality"
                 name="nationality"
-                rules={[{ required: true, message: "Please enter nationality" }]}
+              // rules={[{ required: true, message: "Please enter nationality" }]}
               >
                 <Input placeholder="Enter nationality" />
               </Form.Item>
@@ -305,16 +366,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
                 label="Blood Group"
                 name="bloodGroup"
               >
-                <Select placeholder="Select blood group">
-                  <Option value="A+">A+</Option>
-                  <Option value="A-">A-</Option>
-                  <Option value="B+">B+</Option>
-                  <Option value="B-">B-</Option>
-                  <Option value="O+">O+</Option>
-                  <Option value="O-">O-</Option>
-                  <Option value="AB+">AB+</Option>
-                  <Option value="AB-">AB-</Option>
-                </Select>
+                <Input placeholder="Enter blood group" />
               </Form.Item>
             </Col>
           </Row>
@@ -324,7 +376,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
               <Form.Item
                 label="Alternate Email"
                 name="alternateEmail"
-                rules={[{ type: 'email', message: 'Please enter valid email' }]}
+              // rules={[{ type: 'email', message: 'Please enter valid email' }]}
               >
                 <Input placeholder="Enter alternate email" />
               </Form.Item>
@@ -357,7 +409,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
               <Form.Item
                 label="Job Title / Designation"
                 name="jobTitle"
-                rules={[{ required: true, message: "Please enter job title" }]}
+              // rules={[{ required: true, message: "Please enter job title" }]}
               >
                 <Input placeholder="Enter job title" />
               </Form.Item>
@@ -366,7 +418,6 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
               <Form.Item
                 label="Salary"
                 name="salary"
-                rules={[{ required: true, message: "Please enter salary" }]}
               >
                 <Input placeholder="Enter salary" type="number" />
               </Form.Item>
@@ -418,9 +469,10 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
       ),
       children: (
         <>
-          <Title level={5} style={{ marginTop: 0, marginBottom: 16, color: "#1a1a2e" }}>
+          {/* <Title level={5} style={{ marginTop: 0, marginBottom: 16, color: "#1a1a2e" }}>
             Passport Details
-          </Title>
+          </Title> */}
+          <Divider orientation="left"> Passport Details</Divider>
 
           <Row gutter={16}>
             <Col xs={24} sm={12}>
@@ -471,7 +523,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
                   <Form.Item
                     label="Visa ID Number"
                     name="visaIdNumber"
-                    rules={[{ required: true, message: "Please enter Visa ID number" }]}
+                  // rules={[{ required: true, message: "Please enter Visa ID number" }]}
                   >
                     <Input placeholder="Enter Visa ID number" />
                   </Form.Item>
@@ -480,7 +532,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
                   <Form.Item
                     label="Visa Issue Date"
                     name="visaIssueDate"
-                    rules={[{ required: true, message: "Please select issue date" }]}
+                  // rules={[{ required: true, message: "Please select issue date" }]}
                   >
                     <DatePicker style={{ width: '100%' }} format="DD-MM-YYYY" />
                   </Form.Item>
@@ -492,43 +544,55 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
                   <Form.Item
                     label="Visa Expiry Date"
                     name="visaExpiryDate"
-                    rules={[{ required: true, message: "Please select expiry date" }]}
+                  // rules={[{ required: true, message: "Please select expiry date" }]}
                   >
                     <DatePicker style={{ width: '100%' }} format="DD-MM-YYYY" />
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={12}>
+                {/* <Col xs={24} sm={12}>
                   <Form.Item
                     label="Visa Type"
                     name="visaType"
-                    rules={[{ required: true, message: "Please enter visa type" }]}
+                  // rules={[{ required: true, message: "Please enter visa type" }]}
                   >
                     <Select placeholder="Select visa type">
                       <Option value="Tourist Visa">Tourist Visa</Option>
                       <Option value="Residence Visa">Residence Visa</Option>
                     </Select>
                   </Form.Item>
-                </Col>
-
-              </Row>
-              <Row gutter={16}>
+                </Col> */}
                 <Col xs={24} sm={12}>
                   <Form.Item
                     label="Country of Visa Issuance"
                     name="countryOfVisaIssuance"
-                    rules={[{ required: true, message: "Please enter Country of Visa Issuance" }]}
+                  // rules={[{ required: true, message: "Please enter Country of Visa Issuance" }]}
                   >
-                    <Select placeholder="Select Country of Visa Issuance" style={{ width: '100%' }} name="countryOfVisaIssuance" >
-                      <Option value="UAE">UAE</Option>
-                      <Option value="India">India</Option>
-                      <Option value="USA">USA</Option>
-                      <Option value="UK">UK</Option>
-                      <Option value="Canada">Canada</Option>
+                    <Select
+                      mode="tags"
+                      maxCount={1}
+                      placeholder="Select or type Country of Visa Issuance"
+                      style={{ width: '100%' }}
+                      options={visaCountryOptions.map((country) => ({
+                        value: country,
+                        label: country,
+                      }))}
+                      onChange={(value) => {
+                        const selectedValues = Array.isArray(value) ? value : [];
+                        const selectedCountry = selectedValues[0];
+
+                        if (selectedCountry && !visaCountryOptions.includes(selectedCountry)) {
+                          setVisaCountryOptions((prev) => [...prev, selectedCountry]);
+                        }
+                      }}
+                    >
                     </Select>
                   </Form.Item>
                 </Col>
               </Row>
+              {/* <Row gutter={16}>
+
+              </Row> */}
             </>
           )}
 
@@ -555,7 +619,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
           </Row>
 
           <Form.Item
-            label="Upload Documents"
+            label=""
           >
             <Upload
               fileList={fileList}
@@ -570,7 +634,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
                 Upload Documents
               </Button>
             </Upload>
-            <Typography.Text type="secondary" style={{ fontSize: "12px", display: "block", marginTop: 4 }}>
+            <Typography.Text type="secondary" style={{ fontSize: "12px", display: "block", marginTop: 4, color: "#fff" }}>
               Upload passport, visa, Emirates ID, and other relevant documents (PDF, Images, Office documents)
             </Typography.Text>
           </Form.Item>
@@ -586,9 +650,10 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
       ),
       children: (
         <>
-          <Title level={5} style={{ marginTop: 0, marginBottom: 16, color: "#1a1a2e" }}>
+          {/* <Title level={5} style={{ marginTop: 0, marginBottom: 16, color: "#1a1a2e" }}>
             Emergency Contact Details
-          </Title>
+          </Title> */}
+          <Divider orientation="left">  Emergency Contact Details</Divider>
 
           <Row gutter={16}>
             <Col xs={24} sm={12}>
@@ -673,16 +738,13 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
       ),
       children: (
         <>
-          <Title level={5} style={{ marginTop: 0, marginBottom: 16, color: "#1a1a2e" }}>
-            Bank Account Information
-          </Title>
-
+          <Divider orientation="left">Bank Account Information</Divider>
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Bank Name"
                 name="bankName"
-                rules={[{ required: true, message: "Please enter bank name" }]}
+              // rules={[{ required: true, message: "Please enter bank name" }]}
               >
                 <Input placeholder="Enter bank name" />
               </Form.Item>
@@ -691,7 +753,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
               <Form.Item
                 label="Account Holder Name"
                 name="accountHolderName"
-                rules={[{ required: true, message: "Please enter account holder name" }]}
+              // rules={[{ required: true, message: "Please enter account holder name" }]}
               >
                 <Input placeholder="Enter account holder name" />
               </Form.Item>
@@ -703,27 +765,49 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
               <Form.Item
                 label="Account Number"
                 name="accountNumber"
-                rules={[{ required: true, message: "Please enter account number" }]}
+              // rules={[{ required: true, message: "Please enter account number" }]}
               >
                 <Input placeholder="Enter account number" />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item
+                label="IBAN Number"
+                name="ibanNumber"
+              // rules={[{ required: true, message: "Please enter IBAN number" }]}
+              >
+                <Input placeholder="Enter IBAN number" />
+              </Form.Item>
+            </Col>
+
+          </Row>
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
                 label="IFSC Code"
                 name="ifscCode"
-                rules={[{ required: true, message: "Please enter IFSC code" }]}
+              // rules={[{ required: true, message: "Please enter IFSC code" }]}
               >
                 <Input placeholder="Enter IFSC code" />
               </Form.Item>
             </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Swift Code"
+                name="swiftCode"
+              // rules={[{ required: true, message: "Please enter Swift code" }]}
+              >
+                <Input placeholder="Enter Swift code" />
+              </Form.Item>
+            </Col>
+
           </Row>
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Account Type"
                 name="accountType"
-                rules={[{ required: true, message: "Please select account type" }]}
+              // rules={[{ required: true, message: "Please select account type" }]}
               >
                 <Select placeholder="Select account type">
                   <Option value="Savings">Savings</Option>
@@ -755,10 +839,10 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
       ),
       children: (
         <>
-          <Title level={5} style={{ marginTop: 0, marginBottom: 16, color: "#1a1a2e" }}>
+          {/* <Title level={5} style={{ marginTop: 0, marginBottom: 16, color: "#1a1a2e" }}>
             IT & Access Details
-          </Title>
-
+          </Title> */}
+          <Divider orientation="left">  IT & Access Details</Divider>
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
@@ -797,7 +881,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
           <Row gutter={16}>
             <Col xs={24}>
               <Form.Item
-                label="Additional Notes"
+                label=""
                 name="notes"
               >
                 <TextArea
@@ -831,16 +915,16 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
           maxHeight: 'calc(100vh - 80px)',
           overflowY: 'auto',
           padding: "24px",
-          background: "rgb(245, 245, 245)"
+          // background: "rgb(245, 245, 245)"
         },
       }}
     >
-      <div style={{ marginBottom: 24 }}>
+      {/* <div style={{ marginBottom: 24 }}>
         <Title level={3} style={{ margin: 0, color: "#1a1a2e", fontWeight: 600 }}>
           Add New Employee
         </Title>
         <Text type="secondary">Fill in the employee details across different sections</Text>
-      </div>
+      </div> */}
 
       <Form
         layout="vertical"
@@ -849,12 +933,14 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
         scrollToFirstError
       >
         <Tabs
+          className="employee-modal-tabs"
           activeKey={activeTab}
           onChange={setActiveTab}
           items={tabItems}
           type="card"
           style={{
-            marginBottom: 24
+            marginBottom: 24,
+
           }}
         />
 

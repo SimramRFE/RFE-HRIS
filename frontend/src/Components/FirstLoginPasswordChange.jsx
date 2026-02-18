@@ -25,7 +25,7 @@ const FirstLoginPasswordChange = () => {
       if (response.data.success) {
         message.success("Password changed successfully! Redirecting to dashboard...");
         setTimeout(() => {
-          navigate("/dashboard");
+          navigate("/employees");
         }, 1000);
       }
     } catch (error) {

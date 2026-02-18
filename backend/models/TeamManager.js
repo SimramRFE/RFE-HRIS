@@ -33,8 +33,8 @@ const teamManagerSchema = new mongoose.Schema({
   employee: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Employee',
-    required: true,
-    unique: true
+    unique: true,
+    sparse: true
   },
   teamName: {
     type: String,

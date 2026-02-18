@@ -8,9 +8,14 @@ const {
   firstLoginPasswordChange,
   getMe,
   getManagerMe,
-  checkAdminExists
+  checkAdminExists,
+  createManager,
+  getManagers,
+  updateManagerStatus,
+  deleteManager,
+  resetManagerPassword
 } = require('../controllers/authController');
-const { protect, protectManager } = require('../middleware/auth');
+const { protect, protectManager, authorize } = require('../middleware/auth');
 
 // Public routes
 router.post('/signup', signup);
@@ -23,5 +28,10 @@ router.put('/first-login-password-change', protect, firstLoginPasswordChange);
 router.put('/change-password', protect, changePassword);
 router.get('/me', protect, getMe);
 router.get('/manager-me', protectManager, getManagerMe);
+router.post('/create-manager', protect, authorize('admin', 'hr'), createManager);
+router.get('/managers', protect, authorize('admin'), getManagers);
+router.put('/managers/:id/status', protect, authorize('admin'), updateManagerStatus);
+router.delete('/managers/:id', protect, authorize('admin'), deleteManager);
+router.put('/managers/:id/reset-password', protect, authorize('admin'), resetManagerPassword);
 
 module.exports = router;

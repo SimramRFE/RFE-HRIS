@@ -22,7 +22,11 @@ const managerApi = axios.create({
 // Request interceptor to add token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token =
+      sessionStorage.getItem('token') ||
+      sessionStorage.getItem('managerToken') ||
+      localStorage.getItem('token') ||
+      localStorage.getItem('managerToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -36,7 +40,11 @@ api.interceptors.request.use(
 // Request interceptor for manager API
 managerApi.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('managerToken');
+    const token =
+      sessionStorage.getItem('managerToken') ||
+      sessionStorage.getItem('token') ||
+      localStorage.getItem('managerToken') ||
+      localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -57,8 +65,18 @@ api.interceptors.response.use(
 
       if (!isAuthRequest) {
         // Token expired or invalid
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('auth');
+        sessionStorage.removeItem('user');
+        sessionStorage.removeItem('managerToken');
+        sessionStorage.removeItem('manager');
+        sessionStorage.removeItem('managerAuth');
         localStorage.removeItem('token');
+        localStorage.removeItem('auth');
         localStorage.removeItem('user');
+        localStorage.removeItem('managerToken');
+        localStorage.removeItem('manager');
+        localStorage.removeItem('managerAuth');
         window.location.href = '/login';
       }
     }
@@ -76,9 +94,18 @@ managerApi.interceptors.response.use(
 
       if (!isAuthRequest) {
         // Token expired or invalid
+        sessionStorage.removeItem('managerToken');
+        sessionStorage.removeItem('manager');
+        sessionStorage.removeItem('managerAuth');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('auth');
+        sessionStorage.removeItem('user');
         localStorage.removeItem('managerToken');
         localStorage.removeItem('manager');
         localStorage.removeItem('managerAuth');
+        localStorage.removeItem('token');
+        localStorage.removeItem('auth');
+        localStorage.removeItem('user');
         window.location.href = '/login';
       }
     }
@@ -91,6 +118,11 @@ export const authAPI = {
   signup: (data) => api.post('/auth/signup', data),
   login: (data) => api.post('/auth/login', data),
   managerLogin: (data) => api.post('/auth/manager-login', data),
+  createManager: (data) => api.post('/auth/create-manager', data),
+  getManagers: () => api.get('/auth/managers'),
+  updateManagerStatus: (id, isActive) => api.put(`/auth/managers/${id}/status`, { isActive }),
+  deleteManager: (id) => api.delete(`/auth/managers/${id}`),
+  resetManagerPassword: (id, data) => api.put(`/auth/managers/${id}/reset-password`, data),
   firstLoginPasswordChange: (data) => api.put('/auth/first-login-password-change', data),
   changePassword: (data) => api.put('/auth/change-password', data),
   getMe: () => api.get('/auth/me'),
@@ -106,6 +138,7 @@ export const employeeAPI = {
   update: (id, data) => api.put(`/employees/${id}`, data),
   delete: (id) => api.delete(`/employees/${id}`),
   search: (query) => api.get(`/employees/search?query=${query}`),
+  getVisaCountries: () => api.get('/employees/visa-countries'),
 };
 
 // Upload API

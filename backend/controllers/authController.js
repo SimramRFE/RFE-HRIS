@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose');
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -25,6 +26,262 @@ exports.checkAdminExists = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error checking admin existence'
+    });
+  }
+};
+
+// @desc    Create manager user
+// @route   POST /api/auth/create-manager
+// @access  Private (Admin/HR)
+exports.createManager = async (req, res) => {
+  try {
+    const { username, password, confirmPassword } = req.body;
+
+    if (!username || !password || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide username, password and confirm password'
+      });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password and confirm password do not match'
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters'
+      });
+    }
+
+    const normalizedUsername = String(username).trim().toLowerCase();
+    if (!normalizedUsername) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username is required'
+      });
+    }
+
+    const existingUser = await User.findOne({ username: normalizedUsername });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username already exists'
+      });
+    }
+
+    const generatedEmail = `${normalizedUsername}@manager.com`;
+    const existingEmail = await User.findOne({ email: generatedEmail });
+    if (existingEmail) {
+      return res.status(400).json({
+        success: false,
+        message: 'Generated email already exists for this username'
+      });
+    }
+
+    const managerUser = await User.create({
+      username: normalizedUsername,
+      name: normalizedUsername,
+      email: generatedEmail,
+      password,
+      role: 'manager',
+      isFirstLogin: true,
+      isActive: true
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Manager created successfully',
+      data: {
+        id: managerUser._id,
+        username: managerUser.username,
+        role: managerUser.role,
+        isFirstLogin: managerUser.isFirstLogin
+      }
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern || {})[0] || 'field';
+      return res.status(400).json({
+        success: false,
+        message: `${field} already exists`
+      });
+    }
+
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors || {}).map((err) => err.message);
+      return res.status(400).json({
+        success: false,
+        message: messages[0] || 'Validation error'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Error creating manager',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get all manager users
+// @route   GET /api/auth/managers
+// @access  Private (Admin)
+exports.getManagers = async (req, res) => {
+  try {
+    const managers = await User.find({ role: 'manager' })
+      .select('_id username name email isActive createdAt')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: managers
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching managers',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Update manager active status
+// @route   PUT /api/auth/managers/:id/status
+// @access  Private (Admin)
+exports.updateManagerStatus = async (req, res) => {
+  try {
+    const { isActive } = req.body;
+
+    if (typeof isActive !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: 'isActive must be boolean'
+      });
+    }
+
+    const manager = await User.findOne({ _id: req.params.id, role: 'manager' });
+    if (!manager) {
+      return res.status(404).json({
+        success: false,
+        message: 'Manager not found'
+      });
+    }
+
+    manager.isActive = isActive;
+    await manager.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Manager ${isActive ? 'enabled' : 'disabled'} successfully`,
+      data: {
+        id: manager._id,
+        isActive: manager.isActive
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error updating manager status',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Delete manager
+// @route   DELETE /api/auth/managers/:id
+// @access  Private (Admin)
+exports.deleteManager = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid manager id'
+      });
+    }
+
+    const manager = await User.findOne({ _id: id, role: 'manager' });
+    if (!manager) {
+      return res.status(404).json({
+        success: false,
+        message: 'Manager not found'
+      });
+    }
+
+    await User.deleteOne({ _id: id, role: 'manager' });
+
+    res.status(200).json({
+      success: true,
+      message: 'Manager deleted successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting manager',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Reset manager password
+// @route   PUT /api/auth/managers/:id/reset-password
+// @access  Private (Admin)
+exports.resetManagerPassword = async (req, res) => {
+  try {
+    const { newPassword, confirmPassword } = req.body;
+
+    if (!newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide new password'
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 6 characters'
+      });
+    }
+
+    if (confirmPassword !== undefined && newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password and confirm password do not match'
+      });
+    }
+
+    const manager = await User.findOne({ _id: req.params.id, role: 'manager' }).select('+password');
+    if (!manager) {
+      return res.status(404).json({
+        success: false,
+        message: 'Manager not found'
+      });
+    }
+
+    manager.password = newPassword;
+    manager.isFirstLogin = true;
+    await manager.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Manager password reset successfully',
+      data: {
+        id: manager._id,
+        isFirstLogin: manager.isFirstLogin
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error resetting manager password',
+      error: error.message
     });
   }
 };
@@ -357,6 +614,7 @@ exports.getMe = async (req, res) => {
       success: true,
       data: {
         id: user._id,
+        username: user.username,
         name: user.name,
         email: user.email,
         role: user.role,

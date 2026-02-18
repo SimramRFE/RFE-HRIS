@@ -36,19 +36,41 @@ const Login = () => {
       const response = await authAPI.login({ username, password });
       
       if (response.data.success) {
-        const { token, isFirstLogin } = response.data.data;
-        
-        // Store only token
-        localStorage.setItem("token", token);
-        localStorage.setItem("auth", "true");
-        
+        const { token, isFirstLogin, role } = response.data.data;
+
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("auth");
+        sessionStorage.removeItem("user");
+        sessionStorage.removeItem("managerToken");
+        sessionStorage.removeItem("managerAuth");
+        sessionStorage.removeItem("manager");
+
+        if (role === "manager") {
+          sessionStorage.setItem("managerToken", token);
+          sessionStorage.setItem("managerAuth", "true");
+          sessionStorage.setItem("manager", JSON.stringify(response.data.data));
+          message.success("Manager login successful!");
+          navigate("/employees");
+          return;
+        }
+
+        sessionStorage.setItem("token", token);
+        sessionStorage.setItem("auth", "true");
+
         message.success("Login successful!");
-        
-        // Check if first-time login
+
         if (isFirstLogin) {
           navigate("/password-change");
         } else {
-          navigate("/dashboard");
+          navigate("/employees");
+        }
+
+        message.success("Login successful!");
+
+        if (isFirstLogin) {
+          navigate("/password-change");
+        } else {
+          navigate("/employees");
         }
       }
     } catch (error) {
@@ -65,7 +87,7 @@ const Login = () => {
       className="relative min-h-screen bg-cover bg-center flex items-center justify-center"
       style={{
         backgroundImage:
-          "url('https://img.freepik.com/free-vector/gradient-hexagonal-background_23-2148944164.jpg?semt=ais_hybrid&w=740&q=80')",
+          "url('/src/assets/main_bg.avif')",
       }}
     >
       <div className="relative bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-2xl w-[400px] p-8 text-white">
@@ -77,17 +99,6 @@ const Login = () => {
           />
           <h1 className="text-3xl font-bold">Login</h1>
         </div>
-
-        <Tabs
-          centered
-          activeKey={loginType}
-          onChange={(key) => setLoginType(key)}
-          className="custom-white-tabs"
-          items={[
-            { key: "account", label: "Admin Login" },
-            { key: "manager", label: "Manager Login" },
-          ]}
-        />
 
         {loginType === "account" ? (
           <Form name="login" onFinish={handleSubmit} layout="vertical">

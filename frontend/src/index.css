@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
-@import "antd/dist/reset.css"; /* keep AntD reset below tailwind base if used */
+@import "antd/dist/reset.css";
+/* keep AntD reset below tailwind base if used */
 
 /* You can still use Tailwind layers if you prefer:
 @layer base {}
@@ -8,16 +9,18 @@
 @layer utilities {}
 */
 :where(.css-dev-only-do-not-override-kk2c0l).ant-table-wrapper .ant-table-cell,
-:where(.css-dev-only-do-not-override-kk2c0l).ant-table-wrapper .ant-table-tbody>tr>td{
+:where(.css-dev-only-do-not-override-kk2c0l).ant-table-wrapper .ant-table-tbody>tr>td {
   padding: 6px 6px;
 }
+
 :where(.css-dev-only-do-not-override-kk2c0l).ant-divider-horizontal {
-    margin: 16px 0;
+  margin: 16px 0;
 }
-:where(.css-dev-only-do-not-override-kk2c0l).ant-table-wrapper .ant-table-thead >tr>th{
+
+:where(.css-dev-only-do-not-override-kk2c0l).ant-table-wrapper .ant-table-thead>tr>th {
   background-color: #031c4e;
   color: #ffffff;
-  padding: 10px 10px;
+  padding: 5px 5px;
 }
 
 /* White text for login tabs */
@@ -31,4 +34,74 @@
 
 .custom-white-tabs .ant-tabs-ink-bar {
   background: white !important;
+}
+
+.sidebar-gradient-active .ant-menu-item-selected {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+  color: #fff !important;
+}
+
+.sidebar-gradient-active .ant-menu-item-selected .ant-menu-title-content,
+.sidebar-gradient-active .ant-menu-item-selected .anticon {
+  color: #fff !important;
+}
+
+.employee-modal-tabs.ant-tabs-card>.ant-tabs-nav .ant-tabs-tab-active {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+  border-color: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+
+}
+
+:where(.css-dev-only-do-not-override-kk2c0l).ant-tabs .ant-tabs-tab {
+  color: #40b606 !important;
+  ;
+}
+
+.employee-modal-tabs.ant-tabs-card>.ant-tabs-nav .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #fff !important;
+}
+
+:where(.css-dev-only-do-not-override-kk2c0l).ant-modal .ant-modal-content {
+  padding: 10px !important;
+}
+
+:where(.css-dev-only-do-not-override-kk2c0l).ant-tabs>.ant-tabs-nav .ant-tabs-nav-list,
+:where(.css-dev-only-do-not-override-kk2c0l).ant-tabs>div>.ant-tabs-nav .ant-tabs-nav-list {
+  width: 100%;
+  justify-content: space-evenly;
+}
+
+:where(.css-dev-only-do-not-override-kk2c0l).ant-divider-horizontal.ant-divider-with-text {
+  color: #52c41a;
+  border-block-start: 0 #a8f68b;
+}
+
+:where(.css-dev-only-do-not-override-kk2c0l).ant-input {
+  border-radius: 0px;
+}
+
+:where(.css-dev-only-do-not-override-kk2c0l).ant-form-item .ant-form-item-label>label {
+  color: #ffffff;
+  font-weight: 500;
+  font-size: 16px;
+}
+
+:where(.css-dev-only-do-not-override-kk2c0l).ant-modal .ant-modal-content {
+  background: url(https://w0.peakpx.com/wallpaper/414/545/HD-wallpaper-spots-shade-background-light.jpg);
+  background-size: cover;
+  background-position: center;
+}
+
+:where(.css-dev-only-do-not-override-kk2c0l)[class^="ant-modal"] [class*=" ant-modal"] {
+  color: #fff;
+}
+
+:where(.css-dev-only-do-not-override-kk2c0l).ant-modal .ant-modal-header,:where(.css-dev-only-do-not-override-kk2c0l).ant-modal .ant-modal-title {
+  color: #52c41a;
+  background: none;
+  font-size: 18px !important;
+  margin-bottom: 20px;
+}
+:where(.css-dev-only-do-not-override-kk2c0l).ant-btn-variant-solid:not(:disabled):not(.ant-btn-disabled):hover {
+    background: #031c4e;
 }

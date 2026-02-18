@@ -5,15 +5,7 @@ import {
   UserOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+
 import { dashboardAPI } from "../services/api";
 
 const { Title } = Typography;
@@ -80,7 +72,7 @@ const DashboardContent = () => {
                   boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
                 }}
-                bodyStyle={{ padding: '32px' }}
+                styles={{ body: { padding: '32px' } }}
               >
                 <Statistic
                   title={<span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 16 }}>Total Employees</span>}
@@ -101,7 +93,7 @@ const DashboardContent = () => {
                   boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                   background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
                 }}
-                bodyStyle={{ padding: '32px' }}
+                styles={{ body: { padding: '32px' } }}
               >
                 <Statistic
                   title={<span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 16 }}>Team Managers</span>}
@@ -113,42 +105,6 @@ const DashboardContent = () => {
             </Col>
           </Row>
 
-          {/* {stats.growthData && stats.growthData.length > 0 && (
-            <Card 
-              style={{ 
-                marginTop: 24, 
-                borderRadius: 12,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-              }}
-              bodyStyle={{ padding: '24px' }}
-            >
-              <Title level={4} style={{ marginBottom: 24, color: "#1a1a2e" }}>
-                Employee Growth
-              </Title>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={stats.growthData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                  <XAxis dataKey="name" stroke="#666" />
-                  <YAxis stroke="#666" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      background: '#fff', 
-                      border: '1px solid #e0e0e0',
-                      borderRadius: 8
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="employees"
-                    stroke="#667eea"
-                    strokeWidth={3}
-                    dot={{ fill: '#667eea', r: 5 }}
-                    activeDot={{ r: 7 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </Card>
-          )} */}
         </>
       )}
     </div>

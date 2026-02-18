@@ -16,13 +16,12 @@ const employeeSchema = new mongoose.Schema({
   // Basic Information
   employeeCode: {
     type: String,
-    required: true,
     unique: true,
+    sparse: true,
     trim: true
   },
   name: {
     type: String,
-    required: true,
     trim: true
   },
   email: {
@@ -34,33 +33,25 @@ const employeeSchema = new mongoose.Schema({
     trim: true
   },
   mobileNo: {
-    type: String,
-    required: true
+    type: String
   },
   dateOfBirth: String,
-  dateOfJoining: {
-    type: String,
-    required: true
-  },
+  dateOfJoining: String,
   
   // Company Information
   department: {
-    type: String,
-    required: true
+    type: String
   },
   company: {
     type: String,
-    required: true,
     enum: ['RFE', 'Royal Tree', 'Royal Falcon']
   },
   employeeStatus: {
     type: String,
-    required: true,
     enum: ['Tourist', 'Resident']
   },
   role: {
-    type: String,
-    required: true
+    type: String
   },
   
   // Personal Details
@@ -114,15 +105,16 @@ const employeeSchema = new mongoose.Schema({
   
   // Salary
   salary: {
-    type: Number,
-    required: true
+    type: Number
   },
   
   // Bank Details
   bankName: String,
   accountHolderName: String,
   accountNumber: String,
+  ibanNumber: String,
   ifscCode: String,
+  swiftCode: String,
   accountType: {
     type: String,
     enum: ['Savings', 'Current', 'Salary']

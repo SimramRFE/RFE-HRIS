@@ -43,7 +43,7 @@ const ManagerDashboardContent = () => {
   return (
     <div style={{ padding: "24px", minHeight: "100vh", background: "#f5f5f5" }}>
       <Title level={2} style={{ marginBottom: 24, color: "#1a1a2e" }}>
-        Welcome, {managerData?.employeeName || "Manager"}!
+         {managerData?.employeeName || "Manager"}!
       </Title>
 
       {/* Manager Info Card */}
@@ -54,7 +54,7 @@ const ManagerDashboardContent = () => {
           boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
         }}
-        bodyStyle={{ padding: 32 }}
+        styles={{ body: { padding: 32 } }}
       >
         <Row gutter={24} align="middle">
           <Col>
@@ -91,7 +91,7 @@ const ManagerDashboardContent = () => {
               boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
               background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
             }}
-            bodyStyle={{ padding: 32 }}
+            styles={{ body: { padding: 32 } }}
           >
             <Statistic
               title={
@@ -114,7 +114,7 @@ const ManagerDashboardContent = () => {
               boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
               background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
             }}
-            bodyStyle={{ padding: 32 }}
+            styles={{ body: { padding: 32 } }}
           >
             <Statistic
               title={
@@ -137,7 +137,7 @@ const ManagerDashboardContent = () => {
               boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
               background: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
             }}
-            bodyStyle={{ padding: 32 }}
+            styles={{ body: { padding: 32 } }}
           >
             <Statistic
               title={

@@ -63,7 +63,7 @@ const UserPanelLayout = ({ children }) => {
           className="flex justify-between items-center"
         >
           <h1 className="text-2xl font-semibold mt-2 mb-0!">User Panel</h1>
-          Welcome, {currentUser.name || "Employee"}
+           {currentUser.name || "Employee"}
         </Header>
         <Content
           style={{

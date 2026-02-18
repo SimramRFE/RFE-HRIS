@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['admin', 'hr', 'employee'],
+    enum: ['admin', 'hr', 'employee', 'manager'],
     default: 'employee'
   },
   isFirstLogin: {

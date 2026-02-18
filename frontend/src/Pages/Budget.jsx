@@ -261,7 +261,7 @@ const Budget = () => {
               border: "none",
               boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
             }}
-            bodyStyle={{ padding: 24 }}
+            styles={{ body: { padding: 24 } }}
           >
             <Statistic
               title={
@@ -286,7 +286,7 @@ const Budget = () => {
               border: "none",
               boxShadow: "0 4px 12px rgba(240, 147, 251, 0.3)",
             }}
-            bodyStyle={{ padding: 24 }}
+            styles={{ body: { padding: 24 } }}
           >
             <Statistic
               title={
@@ -314,7 +314,7 @@ const Budget = () => {
               border: "none",
               boxShadow: "0 4px 12px rgba(67, 233, 123, 0.3)",
             }}
-            bodyStyle={{ padding: 24 }}
+            styles={{ body: { padding: 24 } }}
           >
             <Statistic
               title={
@@ -345,7 +345,7 @@ const Budget = () => {
           marginBottom: 24,
           boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
         }}
-        bodyStyle={{ padding: 24 }}
+        styles={{ body: { padding: 24 } }}
       >
         <Title level={4} style={{ marginBottom: 16 }}>
           Budget Usage Progress

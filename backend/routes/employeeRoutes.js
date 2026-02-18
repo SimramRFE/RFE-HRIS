@@ -6,7 +6,8 @@ const {
   createEmployee,
   updateEmployee,
   deleteEmployee,
-  searchEmployees
+  searchEmployees,
+  getVisaCountries
 } = require('../controllers/employeeController');
 const { protect, authorize } = require('../middleware/auth');
 
@@ -15,6 +16,7 @@ router.use(protect);
 
 // Search route (should be before /:id route)
 router.get('/search', searchEmployees);
+router.get('/visa-countries', getVisaCountries);
 
 // CRUD routes
 router.route('/')

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Table,
   Button,
@@ -30,13 +30,14 @@ import {
 import AddEmployeeModal from "./addEmployee";
 import EditEmployeeModal from "./EditEmployee";
 import ViewEmployee from "./viewEmployee";
-import { employeeAPI } from "../../services/api";
+import { employeeAPI, authAPI } from "../../services/api";
 
 const { Search } = Input;
 const { Title, Text } = Typography;
 
 const Employee = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [employees, setEmployees] = useState([]);
   const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
@@ -44,17 +45,25 @@ const Employee = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [currentRole, setCurrentRole] = useState("");
   const [customizeDrawerVisible, setCustomizeDrawerVisible] = useState(false);
   const [viewDrawerVisible, setViewDrawerVisible] = useState(false);
   const [viewEmployeeId, setViewEmployeeId] = useState(null);
-  
+
   // Available columns configuration
   const [availableColumns] = useState([
     { key: 'employee', label: 'Employee', fixed: true },
+    { key: 'employeeCode', label: 'Emp ID', fixed: true },
     { key: 'contact', label: 'Contact' },
+    { key: 'email', label: 'Email' },
     { key: 'department', label: 'Department' },
     { key: 'role', label: 'Role' },
     { key: 'company', label: 'Company' },
+    { key: 'workLocation', label: 'Work Location' },
+    { key: 'nationality', label: 'Nationality ' },  
+    { key: 'passportNo', label: 'Passport No.' },
+    { key: 'passportExpiryDate', label: 'Passport Expiry Date' },
+    { key: 'visaExpiryDate', label: 'Visa Expiry Date' },
     { key: 'joiningDate', label: 'Joining Date' },
     { key: 'salary', label: 'Salary' },
     { key: 'gender', label: 'Gender' },
@@ -66,21 +75,36 @@ const Employee = () => {
     { key: 'customize', label: 'Customize', fixed: true },
     { key: 'actions', label: 'Actions', fixed: true },
   ]);
-  
+
   // Visible columns state - default visible columns
   const [visibleColumns, setVisibleColumns] = useState([
+    'srNo',
     'employee',
+    'employeeCode',
     'contact',
+    'email',
     'department',
     'role',
     'company',
+    'workLocation',
+    'nationality',
+    'passportNo',
+    'passportExpiryDate',
+    'visaExpiryDate',
     'customize',
     'actions'
   ]);
 
   useEffect(() => {
     loadEmployees();
+    loadCurrentUserRole();
   }, []);
+
+  useEffect(() => {
+    if (location.state?.refreshEmployeesAt) {
+      loadEmployees();
+    }
+  }, [location.state?.refreshEmployeesAt]);
 
   useEffect(() => {
     filterEmployees();
@@ -98,6 +122,17 @@ const Employee = () => {
       message.error(error.response?.data?.message || "Failed to load employees");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCurrentUserRole = async () => {
+    try {
+      const response = await authAPI.getMe();
+      if (response.data.success) {
+        setCurrentRole((response.data.data.role || "").toLowerCase());
+      }
+    } catch (error) {
+      setCurrentRole("");
     }
   };
 
@@ -154,27 +189,34 @@ const Employee = () => {
 
   const allColumnsDefinition = [
     {
-      title: "Employee",
+      title:"Sr. No.",
+      key:"srNo",
+      fixed: "left",
+      width:70,
+      render: (_, __, index) => index + 1 +"." // Display 1-based index
+    },
+    {
+      title: "Employee Name",
       key: "employee",
       fixed: "left",
       width: 200,
       render: (_, record) => (
         <Space>
-          <Avatar
-            size={40}
-            style={{ backgroundColor: "#031c4e" }}
-            icon={<UserOutlined />}
-          >
-            {record.name?.charAt(0)}
-          </Avatar>
           <div>
             <div style={{ fontWeight: 600, color: "#1a1a2e" }}>{record.name}</div>
             <Text type="secondary" style={{ fontSize: 12 }}>
-              {record.employeeCode || record.id}
+              {/* {record.employeeCode || record.id} */}
             </Text>
           </div>
         </Space>
       ),
+    },
+    {
+      title: "Emp ID",
+      dataIndex: "employeeCode",
+      key: "employeeCode",
+      width: 80,
+      render: (code) => code || "N/A",  
     },
     {
       title: "Contact",
@@ -183,17 +225,24 @@ const Employee = () => {
       render: (_, record) => (
         <div>
           <div style={{ marginBottom: 4 }}>
-            <PhoneOutlined style={{ marginRight: 8, color: "#1890ff" }} />
+            {/* <PhoneOutlined style={{ marginRight: 8, color: "#1890ff" }} /> */}
             {record.mobileNo || "N/A"}
           </div>
-          <div>
+          {/* <div>
             <MailOutlined style={{ marginRight: 8, color: "#52c41a" }} />
             <Text ellipsis style={{ maxWidth: 150 }}>
               {record.email || record.officeEmail || "N/A"}
             </Text>
-          </div>
+          </div> */}
         </div>
       ),
+    },
+    {
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
+      width: 250,
+      render: (email) => email || "N/A",
     },
     {
       title: "Department",
@@ -201,9 +250,9 @@ const Employee = () => {
       key: "department",
       width: 120,
       render: (dept) => (
-        <Tag color="blue" style={{ borderRadius: 4 }}>
+        <div color="blue" style={{ borderRadius: 4 }}>
           {dept}
-        </Tag>
+        </div>
       ),
     },
     {
@@ -218,10 +267,45 @@ const Employee = () => {
       key: "company",
       width: 150,
       render: (company) => (
-        <Tag color="purple" style={{ borderRadius: 4 }}>
+        <div color="purple" style={{ borderRadius: 4 }}>
           {company}
-        </Tag>
+        </div>
       ),
+    },
+    {
+      title: "Work Location",
+      dataIndex: "workLocation",
+      key: "workLocation",
+      width: 150,
+      render: (workLocation) => workLocation || "N/A",
+    },
+    {
+      title: "Nationality",
+      dataIndex: "nationality",
+      key : "nationality",
+      width: 130,
+      render: (nationality) =>  nationality || "N/A", 
+    },
+    {
+      title:"Passport No.",
+      dataIndex:"passportNo",
+      key:"passportNo",
+      width:130,
+      render:(passportNo) => passportNo || "N/A"
+    },
+    {
+      title:"Passport Expiry Date",
+      dataIndex:"passportExpiryDate",
+      key:"passportExpiryDate",
+      width:180,
+      render:(passportExpiryDate) => passportExpiryDate || "N/A"
+    },
+    {
+      title:" Visa Expiry Date",
+      dataIndex:"visaExpiryDate",
+      key:"visaExpiryDate",
+      width:130,
+      render:(visaExpiryDate) => visaExpiryDate || "N/A"  
     },
     {
       title: "Joining Date",
@@ -258,13 +342,7 @@ const Employee = () => {
       width: 150,
       render: (jobTitle) => jobTitle || "N/A",
     },
-    {
-      title: "Work Location",
-      dataIndex: "workLocation",
-      key: "workLocation",
-      width: 150,
-      render: (workLocation) => workLocation || "N/A",
-    },
+    
     {
       title: "Reporting Manager",
       dataIndex: "reportingManager",
@@ -283,7 +361,7 @@ const Employee = () => {
       title: "Actions",
       key: "actions",
       // fixed: "right",  
-      width: 280,
+      width: 150,
       render: (_, record) => (
         <Space>
           <Button
@@ -293,32 +371,83 @@ const Employee = () => {
               setViewEmployeeId(record._id || record.id);
               setViewDrawerVisible(true);
             }}
-            style={{ color: "blue" , borderColor: "blue" }}
+            style={{ color: "blue", borderColor: "blue" }}
           >
-            View
+           
           </Button>
           <Button
             type=""
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
-            style={{ color: "green" , borderColor: "green" }}
+            style={{ color: "green", borderColor: "green" }}
           >
-            Edit
+           
           </Button>
-          <Popconfirm
-            title="Are you sure you want to delete this employee?"
-            onConfirm={() => handleDelete(record._id || record.id)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button type="" danger icon={<DeleteOutlined />}>
-              Delete
-            </Button>
-          </Popconfirm>
+          {currentRole === "admin" && (
+            <Popconfirm
+              title="Are you sure you want to delete this employee?"
+              onConfirm={() => handleDelete(record._id || record.id)}
+              okText="Yes"
+              cancelText="No"
+            >
+              <Button type="" danger icon={<DeleteOutlined />}>
+      
+              </Button>
+            </Popconfirm>
+          )}
         </Space>
       ),
     },
-    {
+    
+  ];
+
+  // Filter columns based on visibility
+  const columns = allColumnsDefinition.filter(col => visibleColumns.includes(col.key));
+
+  return (
+    <div style={{ padding: "10px", minHeight: "100vh", backgroundImage: "url('/src/assets/bg.jpg')", backgroundSize: "cover", backgroundPosition: "center" }}>
+      {/* Search and Add Button */}
+      <Card style={{ marginBottom: 10 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
+          <div>
+            <Title level={2} style={{ margin: 0, color: "#1a1a2e", fontSize: 20 }}>
+              Employees<span className="text-green-600"> ({filteredEmployees.length})</span>
+            </Title>
+            {/* <Text type="secondary">Manage and track all employee information</Text> */}
+          </div>
+          <Search
+            placeholder="Search by Name, Emp Id, Department, Company"
+            allowClear
+            enterButton={
+              <Button
+                icon={<SearchOutlined />}
+                style={{
+                  background: "#40b606",
+                  borderColor: "#40b606",
+                  color: "#fff"
+                }}
+              />
+            }
+            
+            size="large"
+            style={{ maxWidth: 450 , hover:{background:"#40b606", borderColor:"#40b606", color:"#fff"}}}
+            onChange={(e) => setSearchText(e.target.value)}
+            value={searchText}
+            
+          />
+          <Button
+            type="primary"
+            size="large"
+            icon={<SettingOutlined />}
+            onClick={() => setCustomizeDrawerVisible(true)}
+            style={{
+              background: "#40b606",
+              borderColor: "#40b606"
+            }}
+          >
+            Customize
+          </Button>
+          {/* {
       title: "Customize",
       key: "customize",
       // fixed: "right",
@@ -328,41 +457,16 @@ const Employee = () => {
           type="primary"
           icon={<SettingOutlined />}
           onClick={() => setCustomizeDrawerVisible(true)}
-          // style={{
-          //   background: "#031c4e",
-          //   borderColor: "#031c4e"
-          // }}
+        // style={{
+        //   background: "#031c4e",
+        //   borderColor: "#031c4e"
+        // }}
         >
           Customize
-        </Button>     
+        </Button>
       ),
-    },
-  ];
-
-  // Filter columns based on visibility
-  const columns = allColumnsDefinition.filter(col => visibleColumns.includes(col.key));
-
-  return (
-    <div style={{ padding: "24px", minHeight: "100vh", background: "#f5f5f5" }}>
-      {/* Search and Add Button */}
-      <Card style={{ marginBottom: 10 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
-          <div>
-            <Title level={2} style={{ margin: 0, color: "#1a1a2e" }}>
-              Employee Management
-            </Title>
-            <Text type="secondary">Manage and track all employee information</Text>
-          </div>
-          <Search
-            placeholder="Search by name, ID, email, department, or role"
-            allowClear
-            enterButton={<SearchOutlined />}
-            size="large"
-            style={{ maxWidth: 500 }}
-            onChange={(e) => setSearchText(e.target.value)}
-            value={searchText}  
-          />
-          <Button
+    }, */}
+          {/* <Button
             type="primary"
             size="large"
             icon={<PlusOutlined />}
@@ -373,7 +477,7 @@ const Employee = () => {
             }}
           >
             Add Employee
-          </Button>
+          </Button> */}
         </div>
       </Card>
 
@@ -387,7 +491,7 @@ const Employee = () => {
             pagination={{
               pageSize: 10,
               showSizeChanger: true,
-              showTotal: (total) => `Total ${total} employees`,
+              
             }}
             scroll={{ x: 1200 }}
             bordered
@@ -399,7 +503,10 @@ const Employee = () => {
       <AddEmployeeModal
         open={isAddModalVisible}
         onCancel={() => setIsAddModalVisible(false)}
-        onSuccess={loadEmployees}
+        onSuccess={() => {
+          setIsAddModalVisible(false);
+          loadEmployees();
+        }}
       />
 
       {/* Edit Employee Modal */}
@@ -427,12 +534,12 @@ const Employee = () => {
         open={customizeDrawerVisible}
         footer={
           <div style={{ textAlign: 'right' }}>
-            <Space>
+            {/* <Space>
               <Button onClick={() => setCustomizeDrawerVisible(false)}>
                 Close
               </Button>
-              <Button 
-                type="primary" 
+              <Button
+                type="primary"
                 onClick={() => {
                   message.success('Column settings applied');
                   setCustomizeDrawerVisible(false);
@@ -444,18 +551,18 @@ const Employee = () => {
               >
                 Apply
               </Button>
-            </Space>
+            </Space> */}
           </div>
         }
       >
-        <div style={{ marginBottom: 16 }}>
+        {/* <div style={{ marginBottom: 16 }}>
           <Text type="secondary">
             Select the columns you want to display in the employee table. Fixed columns cannot be hidden.
           </Text>
-        </div>
-        
-        <Divider orientation="left">Available Columns</Divider>
-        
+        </div> */}
+
+        {/* <Divider orientation="left">Available Columns</Divider> */}
+
         <Space direction="vertical" style={{ width: '100%' }} size="middle">
           {availableColumns.map((col) => (
             <Card
@@ -487,11 +594,11 @@ const Employee = () => {
 
         <Divider />
 
-        <div style={{ 
-          padding: '12px', 
-          background: '#f5f5f5', 
+        <div style={{
+          padding: '12px',
+          background: '#f5f5f5',
           borderRadius: 8,
-          marginTop: 16 
+          marginTop: 16
         }}>
           <Text strong>Visible Columns: </Text>
           <Text type="secondary">
@@ -502,8 +609,8 @@ const Employee = () => {
 
       {/* View Employee Drawer */}
       {viewDrawerVisible && viewEmployeeId && (
-        <ViewEmployee 
-          id={viewEmployeeId} 
+        <ViewEmployee
+          id={viewEmployeeId}
           open={viewDrawerVisible}
           onClose={() => {
             setViewDrawerVisible(false);
@@ -511,7 +618,15 @@ const Employee = () => {
           }}
         />
       )}
+      <style>
+        {`
+      :where(.css-dev-only-do-not-override-kk2c0l).ant-card .ant-card-body {
+    padding: 5px 10px;
+}
+      `}
+      </style>
     </div>
+
   );
 };
 
