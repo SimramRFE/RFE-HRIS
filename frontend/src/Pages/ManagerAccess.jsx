@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Card, List, Checkbox, Spin, Typography, message, Button, Modal, Input, Popconfirm } from "antd";
 import { authAPI } from "../services/api";
+import pageBackground from "../assets/bg.jpg";
 
 const { Title } = Typography;
 
@@ -111,7 +112,7 @@ const ManagerAccess = () => {
   };
 
   return (
-    <div style={{ padding: "10px", minHeight: "100vh", backgroundImage: "url('/src/assets/bg.jpg')", backgroundSize: "cover", backgroundPosition: "center" }}>
+    <div style={{ padding: "10px", minHeight: "100vh", backgroundImage: `url(${pageBackground})`, backgroundSize: "cover", backgroundPosition: "center" }}>
       <Card style={{ borderRadius: 10 }}>
         <Title level={4} style={{ marginBottom: 16 }}>
           Manager Access

@@ -8,16 +8,16 @@
 @layer components {}
 @layer utilities {}
 */
-:where(.css-dev-only-do-not-override-kk2c0l).ant-table-wrapper .ant-table-cell,
-:where(.css-dev-only-do-not-override-kk2c0l).ant-table-wrapper .ant-table-tbody>tr>td {
+.ant-table-wrapper .ant-table-cell,
+.ant-table-wrapper .ant-table-tbody>tr>td {
   padding: 6px 6px;
 }
 
-:where(.css-dev-only-do-not-override-kk2c0l).ant-divider-horizontal {
+.ant-divider-horizontal {
   margin: 16px 0;
 }
 
-:where(.css-dev-only-do-not-override-kk2c0l).ant-table-wrapper .ant-table-thead>tr>th {
+.ant-table-wrapper .ant-table-thead>tr>th {
   background-color: #031c4e;
   color: #ffffff;
   padding: 5px 5px;
@@ -52,7 +52,7 @@
 
 }
 
-:where(.css-dev-only-do-not-override-kk2c0l).ant-tabs .ant-tabs-tab {
+.ant-tabs .ant-tabs-tab {
   color: #40b606 !important;
   ;
 }
@@ -61,47 +61,48 @@
   color: #fff !important;
 }
 
-:where(.css-dev-only-do-not-override-kk2c0l).ant-modal .ant-modal-content {
+.ant-modal .ant-modal-content {
   padding: 10px !important;
 }
 
-:where(.css-dev-only-do-not-override-kk2c0l).ant-tabs>.ant-tabs-nav .ant-tabs-nav-list,
-:where(.css-dev-only-do-not-override-kk2c0l).ant-tabs>div>.ant-tabs-nav .ant-tabs-nav-list {
+.ant-tabs>.ant-tabs-nav .ant-tabs-nav-list,
+.ant-tabs>div>.ant-tabs-nav .ant-tabs-nav-list {
   width: 100%;
   justify-content: space-evenly;
 }
 
-:where(.css-dev-only-do-not-override-kk2c0l).ant-divider-horizontal.ant-divider-with-text {
+.ant-divider-horizontal.ant-divider-with-text {
   color: #52c41a;
   border-block-start: 0 #a8f68b;
 }
 
-:where(.css-dev-only-do-not-override-kk2c0l).ant-input {
+.ant-input {
   border-radius: 0px;
 }
 
-:where(.css-dev-only-do-not-override-kk2c0l).ant-form-item .ant-form-item-label>label {
+.ant-form-item .ant-form-item-label>label {
   color: #ffffff;
   font-weight: 500;
   font-size: 16px;
 }
 
-:where(.css-dev-only-do-not-override-kk2c0l).ant-modal .ant-modal-content {
+.ant-modal .ant-modal-content {
   background: url(https://w0.peakpx.com/wallpaper/414/545/HD-wallpaper-spots-shade-background-light.jpg);
   background-size: cover;
   background-position: center;
 }
 
-:where(.css-dev-only-do-not-override-kk2c0l)[class^="ant-modal"] [class*=" ant-modal"] {
+[class^="ant-modal"] [class*=" ant-modal"] {
   color: #fff;
 }
 
-:where(.css-dev-only-do-not-override-kk2c0l).ant-modal .ant-modal-header,:where(.css-dev-only-do-not-override-kk2c0l).ant-modal .ant-modal-title {
+.ant-modal .ant-modal-header,
+.ant-modal .ant-modal-title {
   color: #52c41a;
   background: none;
   font-size: 18px !important;
   margin-bottom: 20px;
 }
-:where(.css-dev-only-do-not-override-kk2c0l).ant-btn-variant-solid:not(:disabled):not(.ant-btn-disabled):hover {
+.ant-btn-variant-solid:not(:disabled):not(.ant-btn-disabled):hover {
     background: #031c4e;
 }

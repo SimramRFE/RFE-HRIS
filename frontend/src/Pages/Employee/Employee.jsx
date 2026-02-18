@@ -31,6 +31,7 @@ import AddEmployeeModal from "./addEmployee";
 import EditEmployeeModal from "./EditEmployee";
 import ViewEmployee from "./viewEmployee";
 import { employeeAPI, authAPI } from "../../services/api";
+import pageBackground from "../../assets/bg.jpg";
 
 const { Search } = Input;
 const { Title, Text } = Typography;
@@ -405,7 +406,7 @@ const Employee = () => {
   const columns = allColumnsDefinition.filter(col => visibleColumns.includes(col.key));
 
   return (
-    <div style={{ padding: "10px", minHeight: "100vh", backgroundImage: "url('/src/assets/bg.jpg')", backgroundSize: "cover", backgroundPosition: "center" }}>
+    <div style={{ padding: "10px", minHeight: "100vh", backgroundImage: `url(${pageBackground})`, backgroundSize: "cover", backgroundPosition: "center" }}>
       {/* Search and Add Button */}
       <Card style={{ marginBottom: 10 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
@@ -620,7 +621,7 @@ const Employee = () => {
       )}
       <style>
         {`
-      :where(.css-dev-only-do-not-override-kk2c0l).ant-card .ant-card-body {
+      .ant-card .ant-card-body {
     padding: 5px 10px;
 }
       `}

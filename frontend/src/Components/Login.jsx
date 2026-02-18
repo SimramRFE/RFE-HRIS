@@ -4,6 +4,7 @@ import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { authAPI } from "../services/api";
 import UserLogin from "./UserLogin";
+import loginBackground from "../assets/main_bg.avif";
 
 const Login = () => {
   const [loginType, setLoginType] = useState("account");
@@ -86,8 +87,7 @@ const Login = () => {
     <div
       className="relative min-h-screen bg-cover bg-center flex items-center justify-center"
       style={{
-        backgroundImage:
-          "url('/src/assets/main_bg.avif')",
+        backgroundImage: `url(${loginBackground})`,
       }}
     >
       <div className="relative bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-2xl w-[400px] p-8 text-white">
