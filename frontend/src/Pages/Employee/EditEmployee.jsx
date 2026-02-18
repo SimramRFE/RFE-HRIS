@@ -154,15 +154,16 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
       ),
       children: (
         <>
-          <Title level={5} style={{ marginTop: 0, marginBottom: 16, color: "#1a1a2e" }}>
+          <Divider orientation="left">
             Basic Information
-          </Title>
+            </Divider>
+          
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Employee Name"
                 name="name"
-                rules={[{ required: true, message: "Please enter employee name" }]}
+                // rules={[{ required: true, message: "Please enter employee name" }]}
               >
                 <Input placeholder="Enter full name" />
               </Form.Item>
@@ -171,7 +172,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Employee Code"
                 name="employeeCode"
-                rules={[{ required: true, message: "Please enter employee code" }]}
+                // rules={[{ required: true, message: "Please enter employee code" }]}
               >
                 <Input placeholder="Enter employee code" />
               </Form.Item>
@@ -184,7 +185,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
                 label="Mobile Number"
                 name="mobileNo"
                 rules={[
-                  { required: true, message: "Please enter mobile number" },
+                  // { required: true, message: "Please enter mobile number" },
                   { pattern: /^[0-9]{10}$/, message: "Enter valid 10-digit number" }
                 ]}
               >
@@ -217,7 +218,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Date of Joining"
                 name="dateOfJoining"
-                rules={[{ required: true, message: "Please select joining date" }]}
+                // rules={[{ required: true, message: "Please select joining date" }]}
               >
                 <DatePicker style={{ width: '100%' }} format="DD-MM-YYYY" />
               </Form.Item>
@@ -229,7 +230,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Department"
                 name="department"
-                rules={[{ required: true, message: "Please select department" }]}
+                // rules={[{ required: true, message: "Please select department" }]}
               >
                 <Select placeholder="Select department">
                   <Option value="HR">HR</Option>
@@ -245,7 +246,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Company"
                 name="company"
-                rules={[{ required: true, message: "Please select company" }]}
+                // rules={[{ required: true, message: "Please select company" }]}
               >
                 <Select placeholder="Select company">
                   <Option value="RFE">RFE</Option>
@@ -261,7 +262,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Employee Status"
                 name="employeeStatus"
-                rules={[{ required: true, message: "Please select employee status" }]}
+                // rules={[{ required: true, message: "Please select employee status" }]}
               >
                 <Select
                   placeholder="Select status"
@@ -276,7 +277,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Employee Role"
                 name="role"
-                rules={[{ required: true, message: "Please enter employee role" }]}
+                // rules={[{ required: true, message: "Please enter employee role" }]}
               >
                 <Input placeholder="Enter employee role" />
               </Form.Item>
@@ -290,7 +291,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Gender"
                 name="gender"
-                rules={[{ required: true, message: "Please select gender" }]}
+                // rules={[{ required: true, message: "Please select gender" }]}
               >
                 <Select placeholder="Select gender">
                   <Option value="Male">Male</Option>
@@ -303,7 +304,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Nationality"
                 name="nationality"
-                rules={[{ required: true, message: "Please enter nationality" }]}
+                // rules={[{ required: true, message: "Please enter nationality" }]}
               >
                 <Input placeholder="Enter nationality" />
               </Form.Item>
@@ -381,7 +382,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Job Title / Designation"
                 name="jobTitle"
-                rules={[{ required: true, message: "Please enter job title" }]}
+                // rules={[{ required: true, message: "Please enter job title" }]}
               >
                 <Input placeholder="Enter job title" />
               </Form.Item>
@@ -390,7 +391,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Salary"
                 name="salary"
-                rules={[{ required: true, message: "Please enter salary" }]}
+                // rules={[{ required: true, message: "Please enter salary" }]}
               >
                 <Input placeholder="Enter salary" type="number" />
               </Form.Item>
@@ -442,9 +443,9 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
       ),
       children: (
         <>
-          <Title level={5} style={{ marginTop: 0, marginBottom: 16, color: "#1a1a2e" }}>
+          <Divider orientation="left">
             Passport Details
-          </Title>
+          </Divider>
 
           <Row gutter={16}>
             <Col xs={24} sm={12}>
@@ -492,7 +493,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
                   <Form.Item
                     label="Visa ID Number"
                     name="visaIdNumber"
-                    rules={[{ required: true, message: "Please enter Visa ID number" }]}
+                    // rules={[{ required: true, message: "Please enter Visa ID number" }]}
                   >
                     <Input placeholder="Enter Visa ID number" />
                   </Form.Item>
@@ -501,7 +502,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
                   <Form.Item
                     label="Visa Issue Date"
                     name="visaIssueDate"
-                    rules={[{ required: true, message: "Please select issue date" }]}
+                    // rules={[{ required: true, message: "Please select issue date" }]}
                   >
                     <DatePicker style={{ width: '100%' }} format="DD-MM-YYYY" />
                   </Form.Item>
@@ -513,7 +514,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
                   <Form.Item
                     label="Visa Expiry Date"
                     name="visaExpiryDate"
-                    rules={[{ required: true, message: "Please select expiry date" }]}
+                    // rules={[{ required: true, message: "Please select expiry date" }]}
                   >
                     <DatePicker style={{ width: '100%' }} format="DD-MM-YYYY" />
                   </Form.Item>
@@ -523,7 +524,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
                   <Form.Item
                     label="Visa Type"
                     name="visaType"
-                    rules={[{ required: true, message: "Please enter visa type" }]}
+                    // rules={[{ required: true, message: "Please enter visa type" }]}
                   >
                     <Select placeholder="Select visa type">
                       <Option value="Tourist Visa">Tourist Visa</Option>
@@ -538,7 +539,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
                   <Form.Item
                     label="Country of Visa Issuance"
                     name="countryOfVisaIssuance"
-                    rules={[{ required: true, message: "Please enter Country of Visa Issuance" }]}
+                    // rules={[{ required: true, message: "Please enter Country of Visa Issuance" }]}
                   >
                     <Select placeholder="Select Country of Visa Issuance" style={{ width: '100%' }} name="countryOfVisaIssuance" >
                       <Option value="UAE">UAE</Option>
@@ -593,7 +594,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
           )}
 
           <Form.Item
-            label="Upload Documents"
+            // label="Upload Documents"
           >
             <Upload
               fileList={fileList}
@@ -624,9 +625,9 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
       ),
       children: (
         <>
-          <Title level={5} style={{ marginTop: 0, marginBottom: 16, color: "#1a1a2e" }}>
+          <Divider orientation="left">
             Emergency Contact Details
-          </Title>
+          </Divider>
 
           <Row gutter={16}>
             <Col xs={24} sm={12}>
@@ -708,16 +709,16 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
       ),
       children: (
         <>
-          <Title level={5} style={{ marginTop: 0, marginBottom: 16, color: "#1a1a2e" }}>
+        <Divider orientation="left">
             Bank Account Information
-          </Title>
+          </Divider>
 
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Bank Name"
                 name="bankName"
-                rules={[{ required: true, message: "Please enter bank name" }]}
+                // rules={[{ required: true, message: "Please enter bank name" }]}
               >
                 <Input placeholder="Enter bank name" />
               </Form.Item>
@@ -726,7 +727,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Account Holder Name"
                 name="accountHolderName"
-                rules={[{ required: true, message: "Please enter account holder name" }]}
+                // rules={[{ required: true, message: "Please enter account holder name" }]}
               >
                 <Input placeholder="Enter account holder name" />
               </Form.Item>
@@ -738,7 +739,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Account Number"
                 name="accountNumber"
-                rules={[{ required: true, message: "Please enter account number" }]}
+                // rules={[{ required: true, message: "Please enter account number" }]}
               >
                 <Input placeholder="Enter account number" />
               </Form.Item>
@@ -747,7 +748,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="IFSC Code"
                 name="ifscCode"
-                rules={[{ required: true, message: "Please enter IFSC code" }]}
+                // rules={[{ required: true, message: "Please enter IFSC code" }]}
               >
                 <Input placeholder="Enter IFSC code" />
               </Form.Item>
@@ -758,7 +759,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Account Type"
                 name="accountType"
-                rules={[{ required: true, message: "Please select account type" }]}
+                // rules={[{ required: true, message: "Please select account type" }]}
               >
                 <Select placeholder="Select account type">
                   <Option value="Savings">Savings</Option>
@@ -790,9 +791,9 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
       ),
       children: (
         <>
-          <Title level={5} style={{ marginTop: 0, marginBottom: 16, color: "#1a1a2e" }}>
+          <Divider orientation="left">
             IT & Access Details
-          </Title>
+          </Divider>
 
           <Row gutter={16}>
             <Col xs={24} sm={12}>
@@ -868,16 +869,16 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
           maxHeight: 'calc(100vh - 80px)',
           overflowY: 'auto',
           padding: "24px",
-          background: "rgb(245, 245, 245)"
+          // background: "rgb(245, 245, 245)"
         },
       }}
     >
-      <div style={{ marginBottom: 24 }}>
+      {/* <div style={{ marginBottom: 24 }}>
         <Title level={3} style={{ margin: 0, color: "#1a1a2e", fontWeight: 600 }}>
           Edit Employee
         </Title>
         <Text type="secondary">Update employee details across different sections</Text>
-      </div>
+      </div> */}
 
       <Form
         layout="vertical"
