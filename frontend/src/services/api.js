@@ -18,7 +18,11 @@ const getDocumentByFilename = (filename) => {
     return '';
   }
 
-  return `${getApiOrigin()}/uploads/documents/${filename}`;
+  const rawFilename = String(filename).trim();
+  const fileOnly = rawFilename.split('/').pop();
+  const normalizedApiBase = String(API_URL).replace(/\/+$/, '');
+
+  return `${normalizedApiBase}/upload/${encodeURIComponent(fileOnly || rawFilename)}`;
 };
 
 export const resolveDocumentUrl = (rawUrl = '') => {
@@ -33,6 +37,10 @@ export const resolveDocumentUrl = (rawUrl = '') => {
   }
 
   const uploadsOrigin = getApiOrigin();
+
+  if (normalizedUrl.includes('/api/upload/')) {
+    return new URL(normalizedUrl.startsWith('/') ? normalizedUrl : `/${normalizedUrl}`, uploadsOrigin).toString();
+  }
 
   if (normalizedUrl.startsWith('/')) {
     return new URL(normalizedUrl, uploadsOrigin).toString();

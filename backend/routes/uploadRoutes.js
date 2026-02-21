@@ -40,7 +40,9 @@ router.post('/', protect, upload.array('documents', 10), async (req, res) => {
 // Download/View document
 router.get('/:filename', (req, res) => {
   try {
-    const filePath = path.join(__dirname, '../uploads/documents', req.params.filename);
+    const requestedFilename = decodeURIComponent(req.params.filename || '');
+    const safeFilename = path.basename(requestedFilename);
+    const filePath = path.join(__dirname, '../uploads/documents', safeFilename);
     
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({
