@@ -5,6 +5,7 @@ const {
   login,
   managerLogin,
   changePassword,
+  resetOwnAdminPassword,
   firstLoginPasswordChange,
   getMe,
   getManagerMe,
@@ -26,6 +27,7 @@ router.get('/admin-exists', checkAdminExists);
 // Protected routes
 router.put('/first-login-password-change', protect, firstLoginPasswordChange);
 router.put('/change-password', protect, changePassword);
+router.put('/admin/reset-password', protect, authorize('admin'), resetOwnAdminPassword);
 router.get('/me', protect, getMe);
 router.get('/manager-me', protectManager, getManagerMe);
 router.post('/create-manager', protect, authorize('admin', 'hr'), createManager);

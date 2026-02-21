@@ -15,13 +15,13 @@ const FirstLoginPasswordChange = () => {
     try {
       setLoading(true);
       const { oldPassword, newPassword, confirmPassword } = values;
-      
-      const response = await authAPI.firstLoginPasswordChange({ 
-        oldPassword, 
-        newPassword, 
-        confirmPassword 
+
+      const response = await authAPI.firstLoginPasswordChange({
+        oldPassword,
+        newPassword,
+        confirmPassword
       });
-      
+
       if (response.data.success) {
         message.success("Password changed successfully! Redirecting to dashboard...");
         setTimeout(() => {
@@ -80,9 +80,14 @@ const FirstLoginPasswordChange = () => {
             name="newPassword"
             rules={[
               { required: true, message: "Please enter new password!" },
-              { min: 6, message: "Password must be at least 6 characters!" }
+              { min: 8, message: "Password must be at least 8 characters!" },
+              {
+                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/,
+                message: "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&#)!"
+              }
             ]}
           >
+
             <Input.Password
               prefix={<LockOutlined />}
               size="large"

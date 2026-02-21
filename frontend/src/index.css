@@ -57,13 +57,16 @@
   color: #40b606 !important;
   ;
 }
+
 .ant-btn-variant-solid:not(:disabled):not(.ant-btn-disabled):hover {
-    background: #40b606!important;
+  background: #40b606 !important;
 }
+
 .ant-btn-variant-solid {
-    color: #fff;
-    background: #40b606 ;
+  color: #fff;
+  background: #40b606;
 }
+
 .employee-modal-tabs.ant-tabs-card>.ant-tabs-nav .ant-tabs-tab-active .ant-tabs-tab-btn {
   color: #fff !important;
 }
@@ -147,7 +150,20 @@ width: 60%;
   background: transparent !important;
 }
 
-/* .employee-empty-warning-modal .ant-modal-confirm-title,
-.employee-empty-warning-modal .ant-modal-confirm-content {
-  color: #874d00 !important;
-} */
+:where(.css-dev-only-do-not-override-mncuj7).ant-descriptions .ant-descriptions-header {
+    width: fit-content;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);;
+    padding: 8px;
+    border-radius: 10px;
+}
+:where(.css-dev-only-do-not-override-mncuj7).ant-descriptions .ant-descriptions-title{
+  color: #fff;
+}
+.ant-table-wrapper .ant-table-cell,
+.ant-table-wrapper .ant-table-tbody>tr>td,
+.ant-table-wrapper .ant-table-thead>tr>th {
+  text-align: center;
+}
+:where(.css-dev-only-do-not-override-mncuj7).ant-dropdown .ant-dropdown-menu{
+    color: #52c41a;
+}

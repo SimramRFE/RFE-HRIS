@@ -173,6 +173,10 @@ exports.updateManagerStatus = async (req, res) => {
     }
 
     manager.isActive = isActive;
+    if (isActive) {
+      manager.failedLoginAttempts = 0;
+      manager.lockUntil = null;
+    }
     await manager.save();
 
     res.status(200).json({
@@ -355,6 +359,7 @@ exports.signup = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { username, password } = req.body;
+    const MAX_MANAGER_LOGIN_ATTEMPTS = 5;
 
     // Validate input
     if (!username || !password) {
@@ -365,7 +370,8 @@ exports.login = async (req, res) => {
     }
 
     // Check if user exists (include password and isFirstLogin for comparison)
-    const user = await User.findOne({ username }).select('+password');
+    const normalizedUsername = String(username).trim().toLowerCase();
+    const user = await User.findOne({ username: normalizedUsername }).select('+password');
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -384,10 +390,46 @@ exports.login = async (req, res) => {
     // Check if password matches
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      if (user.role === 'manager') {
+        const nextFailedAttempts = (user.failedLoginAttempts || 0) + 1;
+        const shouldSuspend = nextFailedAttempts >= MAX_MANAGER_LOGIN_ATTEMPTS;
+
+        user.failedLoginAttempts = shouldSuspend ? 0 : nextFailedAttempts;
+        user.lockUntil = null;
+        if (shouldSuspend) {
+          user.isActive = false;
+        }
+
+        await user.save({ validateBeforeSave: false });
+
+        const attemptsLeft = Math.max(0, MAX_MANAGER_LOGIN_ATTEMPTS - nextFailedAttempts);
+
+        if (shouldSuspend) {
+          return res.status(403).json({
+            success: false,
+            isSuspended: true,
+            attemptsLeft: 0,
+            message: 'Incorrect Username or Password. Your account has been suspended. Please contact superadmin.'
+          });
+        }
+
+        return res.status(401).json({
+          success: false,
+          attemptsLeft,
+          message: 'Incorrect Username or Password.'
+        });
+      }
+
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
       });
+    }
+
+    if (user.role === 'manager' && ((user.failedLoginAttempts || 0) > 0 || user.lockUntil)) {
+      user.failedLoginAttempts = 0;
+      user.lockUntil = null;
+      await user.save({ validateBeforeSave: false });
     }
 
     // Generate token
@@ -526,6 +568,58 @@ exports.changePassword = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error changing password',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Reset own admin password
+// @route   PUT /api/auth/admin/reset-password
+// @access  Private (Admin)
+exports.resetOwnAdminPassword = async (req, res) => {
+  try {
+    const { newPassword, confirmPassword } = req.body;
+
+    if (!newPassword || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide new password and confirm password'
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password and confirm password do not match'
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 6 characters'
+      });
+    }
+
+    const adminUser = await User.findById(req.user.id).select('+password');
+    if (!adminUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    adminUser.password = newPassword;
+    await adminUser.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error resetting password',
       error: error.message
     });
   }

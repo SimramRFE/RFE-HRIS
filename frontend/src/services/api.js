@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-//  const API_URL = import.meta.env.VITE_API_URL || 'https://gportalcms.com/api';/
+ const API_URL = import.meta.env.VITE_API_URL || 'https://gportalcms.com/api';
 // const API_URL = 'http://localhost:5000/api';
 
 const getApiOrigin = () => {
@@ -167,6 +167,7 @@ export const authAPI = {
   resetManagerPassword: (id, data) => api.put(`/auth/managers/${id}/reset-password`, data),
   firstLoginPasswordChange: (data) => api.put('/auth/first-login-password-change', data),
   changePassword: (data) => api.put('/auth/change-password', data),
+  resetAdminPassword: (data) => api.put('/auth/admin/reset-password', data),
   getMe: () => api.get('/auth/me'),
   getManagerMe: () => managerApi.get('/auth/manager-me'),
   checkAdminExists: () => api.get('/auth/admin-exists'),

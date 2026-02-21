@@ -27,7 +27,7 @@ import EditEmployeeModal from "./EditEmployee";
 import ViewEmployee from "./viewEmployee";
 import { employeeAPI, authAPI } from "../../services/api";
 import { formatDate } from "../../services/dateUtils";
-import { formatPhoneNumber } from "../../services/phoneUtils";
+import { formatPhoneNumber, splitPhoneNumber } from "../../services/phoneUtils";
 
 const { Title, Text } = Typography;
 
@@ -209,11 +209,22 @@ const Employee = () => {
     {
       title: "Contact",
       key: "contact",
-      render: (_, record) => (
-        <div>
-          <div style={{ marginBottom: 4 }}>{formatPhoneNumber(record.mobileNo)}</div>
-        </div>
-      ),
+      render: (_, record) => {
+        const formattedPhone = formatPhoneNumber(record.mobileNo);
+
+        if (formattedPhone === "N/A") {
+          return <div style={{ marginBottom: 4 }}>{formattedPhone}</div>;
+        }
+
+        const { countryCode, number } = splitPhoneNumber(formattedPhone);
+
+        return (
+          <div >
+           <span > {countryCode}</span>
+            {number ? `  ${number}` : ""}
+          </div>
+        );
+      },
     },
     {
       title: "Email",

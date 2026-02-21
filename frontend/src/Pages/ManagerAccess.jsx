@@ -3,6 +3,7 @@ import { Card, List, Spin, Typography, message, Button, Modal, Input, Popconfirm
 import { authAPI } from "../services/api";
 
 const { Title } = Typography;
+const STRONG_PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
 
 const ManagerAccess = () => {
   const [managers, setManagers] = useState([]);
@@ -89,6 +90,21 @@ const ManagerAccess = () => {
 
     if (!newPassword || !confirmPassword) {
       message.error("Please enter new password and confirm password");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      message.error("Password must be at least 8 characters");
+      return;
+    }
+
+    if (!STRONG_PASSWORD_PATTERN.test(newPassword)) {
+      message.error("Password must contain uppercase, lowercase, number, and special character (@$!%*?&#)");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      message.error("New password and confirm password do not match");
       return;
     }
 

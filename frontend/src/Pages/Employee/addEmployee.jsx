@@ -26,8 +26,8 @@ import { employeeAPI, uploadAPI } from "../../services/api";
 import dayjs from "dayjs";
 import { DATE_DISPLAY_FORMAT } from "../../services/dateUtils";
 import {
-  normalizePhoneNumber,
-  PHONE_INPUT_PROPS,
+  combinePhoneNumber,
+  COUNTRY_CODE_VALIDATION_RULE,
   PHONE_VALIDATION_RULE,
 } from "../../services/phoneUtils";
 
@@ -44,8 +44,10 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
   const [activeTab, setActiveTab] = useState("1");
   const [fileList, setFileList] = useState([]);
   const [visaCountryOptions, setVisaCountryOptions] = useState(DEFAULT_VISA_COUNTRIES);
+  const [submitFromAddButton, setSubmitFromAddButton] = useState(false);
 
   const goToPreviousTab = () => {
+    setSubmitFromAddButton(false);
     setActiveTab((previousTab) => {
       const currentIndex = tabOrder.indexOf(previousTab);
       if (currentIndex <= 0) {
@@ -56,6 +58,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
   };
 
   const goToNextTab = () => {
+    setSubmitFromAddButton(false);
     setActiveTab((previousTab) => {
       const currentIndex = tabOrder.indexOf(previousTab);
       if (currentIndex === -1 || currentIndex >= tabOrder.length - 1) {
@@ -93,6 +96,12 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
 
   const handleSubmit = async (values) => {
     try {
+      if (!submitFromAddButton) {
+        return;
+      }
+
+      setSubmitFromAddButton(false);
+
       const hasAnyFormValue = Object.values(values).some((value) => {
         if (dayjs.isDayjs(value)) {
           return true;
@@ -193,13 +202,16 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
       employeeData.emergencyMobileNumber = employeeData.guardianMobileNumber;
       employeeData.alternateEmergencyContact = employeeData.alternateGuardianMobileNumber;
 
-      employeeData.mobileNo = normalizePhoneNumber(employeeData.mobileNo);
-      employeeData.emergencyMobileNumber = normalizePhoneNumber(employeeData.emergencyMobileNumber);
-      employeeData.alternateEmergencyContact = normalizePhoneNumber(employeeData.alternateEmergencyContact);
+      employeeData.mobileNo = combinePhoneNumber(employeeData.mobileCountryCode, employeeData.mobileNo);
+      employeeData.emergencyMobileNumber = combinePhoneNumber(employeeData.guardianCountryCode, employeeData.emergencyMobileNumber);
+      employeeData.alternateEmergencyContact = combinePhoneNumber(employeeData.alternateGuardianCountryCode, employeeData.alternateEmergencyContact);
 
       delete employeeData.guardianName;
       delete employeeData.guardianMobileNumber;
       delete employeeData.alternateGuardianMobileNumber;
+      delete employeeData.mobileCountryCode;
+      delete employeeData.guardianCountryCode;
+      delete employeeData.alternateGuardianCountryCode;
 
       // Remove confirmPassword from the data
       delete employeeData.confirmPassword;
@@ -275,15 +287,16 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Mobile Number"
-                name="mobileNo"
-                rules={[
-                  PHONE_VALIDATION_RULE,
-                ]}
+                required={false}
               >
-                <Input
-                  placeholder="Enter contact number"
-                  {...PHONE_INPUT_PROPS}
-                />
+                <Space.Compact style={{ width: "100%" }}>
+                  <Form.Item name="mobileCountryCode" noStyle rules={[COUNTRY_CODE_VALIDATION_RULE]}>
+                    <Input placeholder="Country" prefix="+" maxLength={4} style={{ width: "28%" }} />
+                  </Form.Item>
+                  <Form.Item name="mobileNo" noStyle rules={[PHONE_VALIDATION_RULE]}>
+                    <Input placeholder="Contact number" style={{ width: "72%" }} />
+                  </Form.Item>
+                </Space.Compact>
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
@@ -727,13 +740,16 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
             <Col xs={24} sm={12}>
               <Form.Item
                 label=" Guardian's Mobile Number"
-                name="guardianMobileNumber"
-                rules={[
-                  // { required: true, message: "Please enter mobile number" },
-                  PHONE_VALIDATION_RULE
-                ]}
+                required={false}
               >
-                <Input placeholder="Enter contact number" {...PHONE_INPUT_PROPS} />
+                <Space.Compact style={{ width: "100%" }}>
+                  <Form.Item name="guardianCountryCode" noStyle rules={[COUNTRY_CODE_VALIDATION_RULE]}>
+                    <Input placeholder="Country" prefix="+" maxLength={4} style={{ width: "28%" }} />
+                  </Form.Item>
+                  <Form.Item name="guardianMobileNumber" noStyle rules={[PHONE_VALIDATION_RULE]}>
+                    <Input placeholder="Contact number" style={{ width: "72%" }} />
+                  </Form.Item>
+                </Space.Compact>
               </Form.Item>
             </Col>
           </Row>
@@ -758,12 +774,16 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Alternate Mobile Number"
-                name="alternateGuardianMobileNumber"
-                rules={[
-                  PHONE_VALIDATION_RULE
-                ]}
+                required={false}
               >
-                <Input placeholder="Enter alternate contact number" {...PHONE_INPUT_PROPS} />
+                <Space.Compact style={{ width: "100%" }}>
+                  <Form.Item name="alternateGuardianCountryCode" noStyle rules={[COUNTRY_CODE_VALIDATION_RULE]}>
+                    <Input placeholder="Country" prefix="+" maxLength={4} style={{ width: "28%" }} />
+                  </Form.Item>
+                  <Form.Item name="alternateGuardianMobileNumber" noStyle rules={[PHONE_VALIDATION_RULE]}>
+                    <Input placeholder="Contact number" style={{ width: "72%" }} />
+                  </Form.Item>
+                </Space.Compact>
               </Form.Item>
             </Col>
           </Row>
@@ -923,6 +943,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
         layout="vertical"
         form={form}
         onFinish={handleSubmit}
+        onFinishFailed={() => setSubmitFromAddButton(false)}
         scrollToFirstError
       >
         <Tabs
@@ -953,6 +974,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
                 htmlType="button"
                 size="large"
                 onClick={() => {
+                  setSubmitFromAddButton(false);
                   form.resetFields();
                   setEmployeeStatus("Tourist");
                   setActiveTab("1");
@@ -978,9 +1000,13 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
               ) : (
                 <Button
                   type="primary"
-                  htmlType="submit"
+                  htmlType="button"
                   size="large"
                   loading={loading}
+                  onClick={() => {
+                    setSubmitFromAddButton(true);
+                    form.submit();
+                  }}
                   style={{
                     background: "#52c41a",
                     borderColor: "#52c41a"

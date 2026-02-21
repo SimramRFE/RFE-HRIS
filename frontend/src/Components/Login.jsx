@@ -11,6 +11,8 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [adminExists, setAdminExists] = useState(false);
   const [loginError, setLoginError] = useState("");
+  const [attemptsLeft, setAttemptsLeft] = useState(null);
+  const [isManagerSuspended, setIsManagerSuspended] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -34,8 +36,10 @@ const Login = () => {
     try {
       setLoading(true);
       setLoginError("");
+      setAttemptsLeft(null);
+      setIsManagerSuspended(false);
       const response = await authAPI.login({ username, password });
-      
+
       if (response.data.success) {
         const { token, isFirstLogin, role } = response.data.data;
 
@@ -71,7 +75,17 @@ const Login = () => {
         }
       }
     } catch (error) {
-      const errorMsg = error.response?.data?.message || "Login failed. Please try again.";
+      const errorData = error.response?.data || {};
+      const errorMsg = errorData.message || "Login failed. Please try again.";
+
+      if (typeof errorData.attemptsLeft === "number") {
+        setAttemptsLeft(errorData.attemptsLeft);
+      }
+
+      if (errorData.isSuspended) {
+        setIsManagerSuspended(true);
+      }
+
       setLoginError(errorMsg);
       message.error(errorMsg);
     } finally {
@@ -98,14 +112,7 @@ const Login = () => {
 
         {loginType === "account" ? (
           <Form name="login" onFinish={handleSubmit} layout="vertical">
-            {loginError && (
-              <Alert
-                type="error"
-                message={loginError}
-                showIcon
-                className="mb-4"
-              />
-            )}
+
             <Form.Item
               name="username"
               rules={[
@@ -131,7 +138,21 @@ const Login = () => {
                 placeholder="Password"
               />
             </Form.Item>
-
+            {loginError && (
+              <div className="mb-4">
+                <Alert
+                  type="error"
+                  message={loginError}
+                  showIcon
+                  className={attemptsLeft !== null ? "mb-2" : ""}
+                />
+                {attemptsLeft !== null && !isManagerSuspended && (
+                  <div style={{ color: "#ff4d4f", fontSize: 18, lineHeight: 1.3 }}>
+                    You have {attemptsLeft} attempts left before your account gets suspended.
+                  </div>
+                )}
+              </div>
+            )}
             <Button
               type="primary"
               htmlType="submit"
@@ -147,7 +168,7 @@ const Login = () => {
               <div className="text-center mt-4">
                 <span style={{ color: "rgba(255,255,255,0.8)" }}>
                   Don't have an account?{" "}
-                  <a 
+                  <a
                     onClick={() => navigate("/signup")}
                     style={{ color: "white", fontWeight: "bold", textDecoration: "underline", cursor: "pointer" }}
                   >

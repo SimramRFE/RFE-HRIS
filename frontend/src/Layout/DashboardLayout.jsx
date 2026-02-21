@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Layout, Menu, Avatar, message, List, Checkbox, Spin, Dropdown, Button } from "antd";
+import { Layout, Menu, Avatar, message, Dropdown, Button, Modal, Form, Input } from "antd";
 import {
     PlusCircleOutlined,
     UserAddOutlined,
     UsergroupAddOutlined,
     TeamOutlined,
     LogoutOutlined,
-    DownOutlined,
+    LockOutlined,
 } from "@ant-design/icons";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { authAPI } from "../services/api";
@@ -22,10 +22,10 @@ const DashboardLayout = ({ children }) => {
     const [role, setRole] = useState("superadmin");
     const [createManagerOpen, setCreateManagerOpen] = useState(false);
     const [createEmployeeOpen, setCreateEmployeeOpen] = useState(false);
-    const [managerAccessOpen, setManagerAccessOpen] = useState(false);
-    const [managers, setManagers] = useState([]);
-    const [loadingManagers, setLoadingManagers] = useState(false);
-    const [updatingManagerId, setUpdatingManagerId] = useState("");
+    const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+    const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
+    const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+    const [resetPasswordForm] = Form.useForm();
 
     useEffect(() => {
         fetchCurrentUser();
@@ -86,48 +86,54 @@ const DashboardLayout = ({ children }) => {
         });
     };
 
-    const handleManagerAccessOpenChange = async (open) => {
-        if (role?.toLowerCase() !== "admin") {
-            return;
-        }
-
-        setManagerAccessOpen(open);
-        if (!open) {
-            return;
-        }
-
-        try {
-            setLoadingManagers(true);
-            const response = await authAPI.getManagers();
-            if (response.data.success) {
-                setManagers(response.data.data || []);
-            }
-        } catch (error) {
-            message.error(error?.response?.data?.message || "Failed to load managers");
-        } finally {
-            setLoadingManagers(false);
-        }
+    const openResetPasswordModal = () => {
+        setProfileMenuOpen(false);
+        resetPasswordForm.resetFields();
+        setIsResetPasswordModalOpen(true);
     };
 
-    const handleManagerStatusChange = async (managerId, checked) => {
+    const closeResetPasswordModal = () => {
+        setIsResetPasswordModalOpen(false);
+        resetPasswordForm.resetFields();
+    };
+
+    const handleResetPassword = async () => {
         try {
-            setUpdatingManagerId(managerId);
-            await authAPI.updateManagerStatus(managerId, checked);
-            setManagers((prev) =>
-                prev.map((manager) =>
-                    manager._id === managerId ? { ...manager, isActive: checked } : manager
-                )
-            );
-            message.success(`Manager ${checked ? "enabled" : "disabled"}`);
+            const values = await resetPasswordForm.validateFields();
+            setResetPasswordLoading(true);
+
+            await authAPI.resetAdminPassword({
+                newPassword: values.newPassword,
+                confirmPassword: values.confirmPassword,
+            });
+
+            message.success("Password reset successfully");
+            closeResetPasswordModal();
         } catch (error) {
-            message.error(error?.response?.data?.message || "Failed to update manager status");
+            if (error?.errorFields) {
+                return;
+            }
+
+            message.error(error?.response?.data?.message || "Failed to reset password");
         } finally {
-            setUpdatingManagerId("");
+            setResetPasswordLoading(false);
         }
     };
 
     const displayRole = role?.toLowerCase() === "admin" ? "SA" : "MGR";
     const panelTitle = role?.toLowerCase() === "manager" ? "Manager Panel" : "Super Admin Panel";
+    const isSuperAdmin = role?.toLowerCase() === "admin";
+
+    const profileMenuItems = isSuperAdmin
+        ? [
+            {
+                key: "reset-password",
+                icon: <LockOutlined />,
+                label: "Reset Password",
+                onClick: openResetPasswordModal,
+            },
+        ]
+        : [];
 
     const getSelectedMenuKey = () => {
         if (location.pathname.startsWith("/employees/manager")) {
@@ -161,7 +167,7 @@ const DashboardLayout = ({ children }) => {
                     mode="inline"
                     className="sidebar-gradient-active"
                     selectedKeys={getSelectedMenuKey()}
-                    style={{paddingTop:20}}
+                    style={{ paddingTop: 20 }}
                     items={[
                         { key: "2", icon: <TeamOutlined />, label: <Link to="/employees">Employees</Link> },
                         ...(role?.toLowerCase() === "manager" || role?.toLowerCase() === "admin"
@@ -219,51 +225,12 @@ const DashboardLayout = ({ children }) => {
                     <h1 className="text-xl font-semibold m-0 leading-none">{panelTitle}</h1>
                     <Dropdown
                         trigger={["click"]}
-                        open={managerAccessOpen}
-                        onOpenChange={handleManagerAccessOpenChange}
-                        disabled={role?.toLowerCase() !== "admin"}
-                        popupRender={() => (
-                            <div
-                                style={{
-                                    width: 320,
-                                    maxHeight: 360,
-                                    overflow: "auto",
-                                    background: "#fff",
-                                    borderRadius: 8,
-                                    boxShadow: "0 6px 16px rgba(0,0,0,0.15)",
-                                    padding: 8,
-                                }}
-                            >
-                                {loadingManagers ? (
-                                    <div style={{ textAlign: "center", padding: "20px" }}>
-                                        <Spin />
-                                    </div>
-                                ) : (
-                                    <List
-                                        size="small"
-                                        dataSource={managers}
-                                        locale={{ emptyText: "No managers found" }}
-                                        renderItem={(manager) => (
-                                            <List.Item>
-                                                <div className="flex w-full items-center gap-3">
-                                                    <Checkbox
-                                                        checked={!!manager.isActive}
-                                                        disabled={updatingManagerId === manager._id}
-                                                        onChange={(event) => handleManagerStatusChange(manager._id, event.target.checked)}
-                                                    />
-                                                    <div className="min-w-0">
-                                                        <div className="font-medium leading-5">{manager.username}</div>
-                                                        <div className="text-xs text-gray-500 leading-4">{manager.email}</div>
-                                                    </div>
-                                                </div>
-                                            </List.Item>
-                                        )}
-                                    />
-                                )}
-                            </div>
-                        )}
+                        open={profileMenuOpen}
+                        onOpenChange={setProfileMenuOpen}
+                        disabled={!isSuperAdmin}
+                        menu={{ items: profileMenuItems }}
                     >
-                   
+
                         <Button
                             className="text-base"
                             type="primary"
@@ -310,6 +277,52 @@ const DashboardLayout = ({ children }) => {
                 >
                     {children}
                 </Content>
+
+                <Modal
+                    title="Reset Password"
+                    open={isResetPasswordModalOpen}
+                    onCancel={closeResetPasswordModal}
+                    onOk={handleResetPassword}
+                    okText="Reset Password"
+                    confirmLoading={resetPasswordLoading}
+                    destroyOnClose
+                >
+                    <Form layout="vertical" form={resetPasswordForm}>
+                        <Form.Item
+                            label="New Password"
+                            name="newPassword"
+                            rules={[
+                                // { required: true, message: "Please enter new password" },
+                                { min: 8, message: "Password must be at least 8 characters!" },
+                                {
+                                    pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/,
+                                    message: "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&#)!"
+                                }
+                            ]}
+                        >
+                            <Input.Password placeholder="Enter new password" />
+                        </Form.Item>
+
+                        <Form.Item
+                            label="Confirm New Password"
+                            name="confirmPassword"
+                            dependencies={["newPassword"]}
+                            rules={[
+                                // { required: true, message: "Please confirm new password" },
+                                ({ getFieldValue }) => ({
+                                    validator(_, value) {
+                                        if (!value || getFieldValue("newPassword") === value) {
+                                            return Promise.resolve();
+                                        }
+                                        return Promise.reject(new Error("Passwords do not match"));
+                                    },
+                                }),
+                            ]}
+                        >
+                            <Input.Password placeholder="Confirm new password" />
+                        </Form.Item>
+                    </Form>
+                </Modal>
             </Layout>
         </Layout>
     );

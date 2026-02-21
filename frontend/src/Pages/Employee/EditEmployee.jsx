@@ -26,10 +26,10 @@ import dayjs from 'dayjs';
 import { employeeAPI, uploadAPI } from "../../services/api";
 import { DATE_DISPLAY_FORMAT, formatDate, toDayjsDate } from "../../services/dateUtils";
 import {
-  normalizePhoneNumber,
-  PHONE_INPUT_PROPS,
+  combinePhoneNumber,
+  COUNTRY_CODE_VALIDATION_RULE,
   PHONE_VALIDATION_RULE,
-  toPhoneInputValue,
+  toPhoneFormParts,
 } from "../../services/phoneUtils";
 
 const { Option } = Select;
@@ -38,12 +38,36 @@ const { TextArea } = Input;
 const DEFAULT_VISA_COUNTRIES = ["UAE", "India", "USA", "UK", "Canada"];
 
 const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
+  const tabOrder = ["1", "2", "3", "4"];
   const [form] = Form.useForm();
   const [employeeStatus, setEmployeeStatus] = useState("Tourist");
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("1");
   const [fileList, setFileList] = useState([]);
   const [visaCountryOptions, setVisaCountryOptions] = useState(DEFAULT_VISA_COUNTRIES);
+  const [submitFromUpdateButton, setSubmitFromUpdateButton] = useState(false);
+
+  const goToPreviousTab = () => {
+    setSubmitFromUpdateButton(false);
+    setActiveTab((previousTab) => {
+      const currentIndex = tabOrder.indexOf(previousTab);
+      if (currentIndex <= 0) {
+        return tabOrder[0];
+      }
+      return tabOrder[currentIndex - 1];
+    });
+  };
+
+  const goToNextTab = () => {
+    setSubmitFromUpdateButton(false);
+    setActiveTab((previousTab) => {
+      const currentIndex = tabOrder.indexOf(previousTab);
+      if (currentIndex === -1 || currentIndex >= tabOrder.length - 1) {
+        return tabOrder[tabOrder.length - 1];
+      }
+      return tabOrder[currentIndex + 1];
+    });
+  };
 
   useEffect(() => {
     if (!open) {
@@ -98,9 +122,18 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
       formData.guardianName = formData.guardianName || formData.fatherName;
       formData.guardianMobileNumber = formData.guardianMobileNumber || formData.emergencyMobileNumber;
       formData.alternateGuardianMobileNumber = formData.alternateGuardianMobileNumber || formData.alternateEmergencyContact;
-      formData.mobileNo = toPhoneInputValue(formData.mobileNo);
-      formData.guardianMobileNumber = toPhoneInputValue(formData.guardianMobileNumber);
-      formData.alternateGuardianMobileNumber = toPhoneInputValue(formData.alternateGuardianMobileNumber);
+
+      const employeeMobileParts = toPhoneFormParts(formData.mobileNo);
+      formData.mobileCountryCode = employeeMobileParts.countryCode;
+      formData.mobileNo = employeeMobileParts.contactNumber;
+
+      const guardianMobileParts = toPhoneFormParts(formData.guardianMobileNumber);
+      formData.guardianCountryCode = guardianMobileParts.countryCode;
+      formData.guardianMobileNumber = guardianMobileParts.contactNumber;
+
+      const alternateGuardianMobileParts = toPhoneFormParts(formData.alternateGuardianMobileNumber);
+      formData.alternateGuardianCountryCode = alternateGuardianMobileParts.countryCode;
+      formData.alternateGuardianMobileNumber = alternateGuardianMobileParts.contactNumber;
       formData.department = formData.department ? [formData.department] : undefined;
       formData.company = formData.company ? [formData.company] : undefined;
       formData.countryOfVisaIssuance = formData.countryOfVisaIssuance
@@ -115,6 +148,11 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
 
   const handleSubmit = async (values) => {
     try {
+      if (!submitFromUpdateButton) {
+        return;
+      }
+
+      setSubmitFromUpdateButton(false);
       setLoading(true);
 
       // Handle file uploads first
@@ -183,13 +221,16 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
       employeeData.emergencyMobileNumber = employeeData.guardianMobileNumber;
       employeeData.alternateEmergencyContact = employeeData.alternateGuardianMobileNumber;
 
-      employeeData.mobileNo = normalizePhoneNumber(employeeData.mobileNo);
-      employeeData.emergencyMobileNumber = normalizePhoneNumber(employeeData.emergencyMobileNumber);
-      employeeData.alternateEmergencyContact = normalizePhoneNumber(employeeData.alternateEmergencyContact);
+      employeeData.mobileNo = combinePhoneNumber(employeeData.mobileCountryCode, employeeData.mobileNo);
+      employeeData.emergencyMobileNumber = combinePhoneNumber(employeeData.guardianCountryCode, employeeData.emergencyMobileNumber);
+      employeeData.alternateEmergencyContact = combinePhoneNumber(employeeData.alternateGuardianCountryCode, employeeData.alternateEmergencyContact);
 
       delete employeeData.guardianName;
       delete employeeData.guardianMobileNumber;
       delete employeeData.alternateGuardianMobileNumber;
+      delete employeeData.mobileCountryCode;
+      delete employeeData.guardianCountryCode;
+      delete employeeData.alternateGuardianCountryCode;
 
       // Remove confirmPassword from the data
       delete employeeData.confirmPassword;
@@ -252,15 +293,16 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Mobile Number"
-                name="mobileNo"
-                rules={[
-                  PHONE_VALIDATION_RULE,
-                ]}
+                required={false}
               >
-                <Input
-                  placeholder="Enter contact number"
-                  {...PHONE_INPUT_PROPS}
-                />
+                <Space.Compact style={{ width: "100%" }}>
+                  <Form.Item name="mobileCountryCode" noStyle rules={[COUNTRY_CODE_VALIDATION_RULE]}>
+                    <Input placeholder="Country" prefix="+" maxLength={4} style={{ width: "28%" }} />
+                  </Form.Item>
+                  <Form.Item name="mobileNo" noStyle rules={[PHONE_VALIDATION_RULE]}>
+                    <Input placeholder="Contact number" style={{ width: "72%" }} />
+                  </Form.Item>
+                </Space.Compact>
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
@@ -732,12 +774,16 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Guardian's Mobile Number"
-                name="guardianMobileNumber"
-                rules={[
-                  PHONE_VALIDATION_RULE
-                ]}
+                required={false}
               >
-                <Input placeholder="Enter contact number" {...PHONE_INPUT_PROPS} />
+                <Space.Compact style={{ width: "100%" }}>
+                  <Form.Item name="guardianCountryCode" noStyle rules={[COUNTRY_CODE_VALIDATION_RULE]}>
+                    <Input placeholder="Country" prefix="+" maxLength={4} style={{ width: "28%" }} />
+                  </Form.Item>
+                  <Form.Item name="guardianMobileNumber" noStyle rules={[PHONE_VALIDATION_RULE]}>
+                    <Input placeholder="Contact number" style={{ width: "72%" }} />
+                  </Form.Item>
+                </Space.Compact>
               </Form.Item>
             </Col>
           </Row>
@@ -746,12 +792,16 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Alternate Mobile Number"
-                name="alternateGuardianMobileNumber"
-                rules={[
-                  PHONE_VALIDATION_RULE
-                ]}
+                required={false}
               >
-                <Input placeholder="Enter alternate contact number" {...PHONE_INPUT_PROPS} />
+                <Space.Compact style={{ width: "100%" }}>
+                  <Form.Item name="alternateGuardianCountryCode" noStyle rules={[COUNTRY_CODE_VALIDATION_RULE]}>
+                    <Input placeholder="Country" prefix="+" maxLength={4} style={{ width: "28%" }} />
+                  </Form.Item>
+                  <Form.Item name="alternateGuardianMobileNumber" noStyle rules={[PHONE_VALIDATION_RULE]}>
+                    <Input placeholder="Contact number" style={{ width: "72%" }} />
+                  </Form.Item>
+                </Space.Compact>
               </Form.Item>
             </Col>
           </Row>
@@ -895,6 +945,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
         layout="vertical"
         form={form}
         onFinish={handleSubmit}
+        onFinishFailed={() => setSubmitFromUpdateButton(false)}
         scrollToFirstError
       >
         <Tabs
@@ -914,10 +965,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
                 <Button
                   htmlType="button"
                   size="large"
-                  onClick={() => {
-                    const currentTab = parseInt(activeTab);
-                    setActiveTab(String(currentTab - 1));
-                  }}
+                  onClick={goToPreviousTab}
                 >
                   Previous
                 </Button>
@@ -926,6 +974,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
                 htmlType="button"
                 size="large"
                 onClick={() => {
+                  setSubmitFromUpdateButton(false);
                   form.resetFields();
                   setEmployeeStatus("Tourist");
                   setActiveTab("1");
@@ -940,10 +989,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
                   type="primary"
                   htmlType="button"
                   size="large"
-                  onClick={() => {
-                    const currentTab = parseInt(activeTab);
-                    setActiveTab(String(currentTab + 1));
-                  }}
+                  onClick={goToNextTab}
                   style={{
                     background: "#52c41a",
                     borderColor: "#52c41a"
@@ -954,9 +1000,13 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               ) : (
                 <Button
                   type="primary"
-                  htmlType="submit"
+                  htmlType="button"
                   size="large"
                   loading={loading}
+                  onClick={() => {
+                    setSubmitFromUpdateButton(true);
+                    form.submit();
+                  }}
                   style={{
                     background: "#52c41a",
                     borderColor: "#52c41a"

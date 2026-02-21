@@ -8,6 +8,8 @@ const UserLogin = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [loginError, setLoginError] = useState("");
+  const [attemptsLeft, setAttemptsLeft] = useState(null);
+  const [isManagerSuspended, setIsManagerSuspended] = useState(false);
 
   const handleSubmit = async (values) => {
     const { username, password } = values;
@@ -15,6 +17,8 @@ const UserLogin = () => {
     try {
       setLoading(true);
       setLoginError("");
+      setAttemptsLeft(null);
+      setIsManagerSuspended(false);
       const response = await authAPI.login({ username, password });
       
       if (response.data.success) {
@@ -40,7 +44,17 @@ const UserLogin = () => {
         navigate("/employees");
       }
     } catch (error) {
-      const errorMsg = error.response?.data?.message || "Login failed. Please try again.";
+      const errorData = error.response?.data || {};
+      const errorMsg = errorData.message || "Login failed. Please try again.";
+
+      if (typeof errorData.attemptsLeft === "number") {
+        setAttemptsLeft(errorData.attemptsLeft);
+      }
+
+      if (errorData.isSuspended) {
+        setIsManagerSuspended(true);
+      }
+
       setLoginError(errorMsg);
       message.error(errorMsg);
     } finally {
@@ -51,12 +65,19 @@ const UserLogin = () => {
   return (
     <Form name="managerLogin" onFinish={handleSubmit} layout="vertical">
       {loginError && (
-        <Alert
-          type="error"
-          message={loginError}
-          showIcon
-          className="mb-4"
-        />
+        <div className="mb-4">
+          <Alert
+            type="error"
+            message={loginError}
+            showIcon
+            className={attemptsLeft !== null ? "mb-2" : ""}
+          />
+          {attemptsLeft !== null && !isManagerSuspended && (
+            <div style={{ color: "#ff4d4f", fontSize: 22, lineHeight: 1.3 }}>
+              You have {attemptsLeft} attempts left before your account gets suspended.
+            </div>
+          )}
+        </div>
       )}
       <Form.Item
         name="username"
