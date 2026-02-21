@@ -130,6 +130,7 @@ const DashboardLayout = ({ children }) => {
                 key: "reset-password",
                 icon: <LockOutlined />,
                 label: "Reset Password",
+                style: { backgroundColor: "#f97316", color: "white", fontWeight: "600" },
                 onClick: openResetPasswordModal,
             },
         ]
@@ -273,6 +274,7 @@ const DashboardLayout = ({ children }) => {
                     style={{
                         background: "#fff",
                         borderRadius: "8px",
+                       
                     }}
                 >
                     {children}

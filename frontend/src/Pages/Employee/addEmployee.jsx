@@ -220,9 +220,9 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
 
       if (response.data.success) {
         Modal.success({
-          style: { color: "#fff !important" },
-          title: "Success",
-          content: "Employee added successfully",
+          className: "employee-success-modal",
+          title: <span style={{ color: "#fff" }}>Success</span>,
+          content: <span style={{ color: "#fff" }}>Employee added successfully</span>,
         });
         form.resetFields();
         setEmployeeStatus("Tourist");
