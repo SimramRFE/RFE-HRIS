@@ -32,7 +32,20 @@ export const resolveDocumentUrl = (rawUrl = '') => {
 
   const normalizedUrl = String(rawUrl).trim();
 
+  if (normalizedUrl.includes('/uploads/')) {
+    const filename = normalizedUrl.split('/').pop();
+    return getDocumentByFilename(filename);
+  }
+
   if (normalizedUrl.startsWith('http://') || normalizedUrl.startsWith('https://')) {
+    try {
+      const parsedUrl = new URL(normalizedUrl);
+      if (parsedUrl.pathname.includes('/uploads/')) {
+        return getDocumentByFilename(parsedUrl.pathname.split('/').pop());
+      }
+    } catch (error) {
+    }
+
     return normalizedUrl;
   }
 
@@ -44,10 +57,6 @@ export const resolveDocumentUrl = (rawUrl = '') => {
 
   if (normalizedUrl.startsWith('/')) {
     return new URL(normalizedUrl, uploadsOrigin).toString();
-  }
-
-  if (normalizedUrl.includes('/uploads/')) {
-    return new URL(`/${normalizedUrl.replace(/^\/+/, '')}`, uploadsOrigin).toString();
   }
 
   const filename = normalizedUrl.split('/').pop();
