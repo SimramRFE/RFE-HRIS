@@ -37,12 +37,33 @@ const { TextArea } = Input;
 const DEFAULT_VISA_COUNTRIES = ["UAE", "India", "USA", "UK", "Canada"];
 
 const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
+  const tabOrder = ["1", "2", "3", "4"];
   const [form] = Form.useForm();
   const [employeeStatus, setEmployeeStatus] = useState("Tourist");
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("1");
   const [fileList, setFileList] = useState([]);
   const [visaCountryOptions, setVisaCountryOptions] = useState(DEFAULT_VISA_COUNTRIES);
+
+  const goToPreviousTab = () => {
+    setActiveTab((previousTab) => {
+      const currentIndex = tabOrder.indexOf(previousTab);
+      if (currentIndex <= 0) {
+        return tabOrder[0];
+      }
+      return tabOrder[currentIndex - 1];
+    });
+  };
+
+  const goToNextTab = () => {
+    setActiveTab((previousTab) => {
+      const currentIndex = tabOrder.indexOf(previousTab);
+      if (currentIndex === -1 || currentIndex >= tabOrder.length - 1) {
+        return tabOrder[tabOrder.length - 1];
+      }
+      return tabOrder[currentIndex + 1];
+    });
+  };
 
   useEffect(() => {
     if (!open) {
@@ -667,14 +688,13 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
               multiple
               maxCount={10}
               listType="picture"
-              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
             >
               <Button icon={<UploadOutlined />}>
                 Upload Documents
               </Button>
             </Upload>
             <Typography.Text type="secondary" style={{ fontSize: "12px", display: "block", marginTop: 4, color: "#fff" }}>
-              Upload passport, visa, Emirates ID, and other relevant documents (PDF, Images, Office documents)
+              Upload passport, visa, Emirates ID, and other relevant documents (all file formats supported)
             </Typography.Text>
           </Form.Item>
         </>
@@ -924,10 +944,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
                 <Button
                   htmlType="button"
                   size="large"
-                  onClick={() => {
-                    const currentTab = parseInt(activeTab);
-                    setActiveTab(String(currentTab - 1));
-                  }}
+                  onClick={goToPreviousTab}
                 >
                   Previous
                 </Button>
@@ -950,10 +967,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
                   type="primary"
                   htmlType="button"
                   size="large"
-                  onClick={() => {
-                    const currentTab = parseInt(activeTab);
-                    setActiveTab(String(currentTab + 1));
-                  }}
+                  onClick={goToNextTab}
                   style={{
                     background: "#52c41a",
                     borderColor: "#52c41a"

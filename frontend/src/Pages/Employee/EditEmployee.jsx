@@ -695,14 +695,13 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               multiple
               maxCount={10}
               listType="picture"
-              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
             >
               <Button icon={<UploadOutlined />}>
                 Upload Documents
               </Button>
             </Upload>
             <Text type="secondary" style={{ fontSize: "12px", display: "block", marginTop: 4 , color:'#fff'}}>
-              Upload passport, visa, Emirates ID, and other relevant documents
+              Upload passport, visa, Emirates ID, and other relevant documents (all file formats supported)
             </Text>
           </Form.Item>
         </>

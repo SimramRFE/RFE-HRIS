@@ -195,7 +195,7 @@ const Employee = () => {
       render: (_, record) => (
         <Space>
           <div>
-            <div style={{ fontWeight: 600, color: "#1a1a2e" }}>{record.name}</div>
+            <div >{record.name}</div>
           </div>
         </Space>
       ),

@@ -134,10 +134,10 @@ width: 60%;
   color: #fff !important;
 }
 
-.ant-modal-confirm .ant-modal-confirm-title,
+/* .ant-modal-confirm .ant-modal-confirm-title,
 .ant-modal-confirm .ant-modal-confirm-content {
   color: #fff;
-}
+} */
 
 .employee-empty-warning-modal .ant-modal-content {
   background: #fff !important;
