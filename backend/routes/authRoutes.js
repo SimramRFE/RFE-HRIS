@@ -28,6 +28,8 @@ router.get('/admin-exists', checkAdminExists);
 router.put('/first-login-password-change', protect, firstLoginPasswordChange);
 router.put('/change-password', protect, changePassword);
 router.put('/admin/reset-password', protect, authorize('admin'), resetOwnAdminPassword);
+router.put('/reset-password', protect, authorize('admin'), resetOwnAdminPassword);
+router.post('/reset-password', protect, authorize('admin'), resetOwnAdminPassword);
 router.get('/me', protect, getMe);
 router.get('/manager-me', protectManager, getManagerMe);
 router.post('/create-manager', protect, authorize('admin', 'hr'), createManager);
