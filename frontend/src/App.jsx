@@ -15,7 +15,8 @@ const ProtectedRoute = ({ children }) => {
 
 const FirstLoginRoute = ({ children }) => {
   const isAuth = sessionStorage.getItem("auth") || localStorage.getItem("auth");
-  if (!isAuth) {
+  const isManagerAuth = sessionStorage.getItem("managerAuth") || localStorage.getItem("managerAuth");
+  if (!isAuth && !isManagerAuth) {
     return <Navigate to="/login" replace />;
   }
   return children;

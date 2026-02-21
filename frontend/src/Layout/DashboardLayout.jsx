@@ -126,7 +126,7 @@ const DashboardLayout = ({ children }) => {
         }
     };
 
-    const displayRole = role?.toLowerCase() === "admin" ? "Sa" : "ma";
+    const displayRole = role?.toLowerCase() === "admin" ? "SA" : "MGR";
     const panelTitle = role?.toLowerCase() === "manager" ? "Manager Panel" : "Super Admin Panel";
 
     const getSelectedMenuKey = () => {
@@ -184,7 +184,7 @@ const DashboardLayout = ({ children }) => {
                             ? [{
                                 key: "4",
                                 icon: <UsergroupAddOutlined />,
-                                label: <Link to="/employees/manager">Manager</Link>,
+                                label: <Link to="/employees/manager">Manager's Info</Link>,
                             }]
                             : []),
                         {
@@ -222,7 +222,7 @@ const DashboardLayout = ({ children }) => {
                         open={managerAccessOpen}
                         onOpenChange={handleManagerAccessOpenChange}
                         disabled={role?.toLowerCase() !== "admin"}
-                        dropdownRender={() => (
+                        popupRender={() => (
                             <div
                                 style={{
                                     width: 320,
@@ -267,21 +267,21 @@ const DashboardLayout = ({ children }) => {
                         <Button
                             className="text-base"
                             type="primary"
-                            icon={
-                                <span
-                                    style={{
-                                        display: "inline-flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        width: 18,
-                                        height: 18,
-                                        borderRadius: 999,
-                                        background: "rgb(0, 21, 41)",
-                                    }}
-                                >
-                                    <DownOutlined style={{ fontSize: 10, color: "#fff" }} />
-                                </span>
-                            }
+                            // icon={
+                            //     <span
+                            //         style={{
+                            //             display: "inline-flex",
+                            //             alignItems: "center",
+                            //             justifyContent: "center",
+                            //             width: 18,
+                            //             height: 18,
+                            //             borderRadius: 999,
+                            //             background: "rgb(0, 21, 41)",
+                            //         }}
+                            //     >
+                            //         <DownOutlined style={{ fontSize: 10, color: "#fff" }} />
+                            //     </span>
+                            // }
                             style={{
                                 cursor: role?.toLowerCase() === "admin" ? "pointer" : "default",
                                 background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",

@@ -32,6 +32,20 @@ exports.protect = async (req, res, next) => {
       });
     }
 
+    const isFirstLoginPasswordChangeRoute =
+      req.baseUrl === '/api/auth' && req.path === '/first-login-password-change';
+
+    if (
+      req.user.role === 'manager' &&
+      req.user.isFirstLogin &&
+      !isFirstLoginPasswordChangeRoute
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: 'Password change required before accessing this resource'
+      });
+    }
+
     next();
   } catch (error) {
     return res.status(401).json({
@@ -85,7 +99,15 @@ exports.protectManager = async (req, res, next) => {
 // Grant access to specific roles
 exports.authorize = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    const allowedRoles = roles
+      .filter((role) => typeof role === 'string')
+      .map((role) => role.trim().toLowerCase());
+
+    const currentRole = typeof req.user?.role === 'string'
+      ? req.user.role.trim().toLowerCase()
+      : '';
+
+    if (!allowedRoles.includes(currentRole)) {
       return res.status(403).json({
         success: false,
         message: `User role '${req.user.role}' is not authorized to access this route`

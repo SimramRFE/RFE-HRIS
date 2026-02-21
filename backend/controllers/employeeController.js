@@ -221,6 +221,24 @@ exports.updateEmployee = async (req, res) => {
       });
     }
 
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map((err) => err.message);
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid employee data',
+        errors: messages
+      });
+    }
+
+    // Handle invalid MongoDB ObjectId
+    if (error.name === 'CastError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid employee id'
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Error updating employee',

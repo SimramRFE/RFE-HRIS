@@ -51,20 +51,16 @@ const Login = () => {
           sessionStorage.setItem("managerAuth", "true");
           sessionStorage.setItem("manager", JSON.stringify(response.data.data));
           message.success("Manager login successful!");
-          navigate("/employees");
+          if (isFirstLogin) {
+            navigate("/password-change");
+          } else {
+            navigate("/employees");
+          }
           return;
         }
 
         sessionStorage.setItem("token", token);
         sessionStorage.setItem("auth", "true");
-
-        message.success("Login successful!");
-
-        if (isFirstLogin) {
-          navigate("/password-change");
-        } else {
-          navigate("/employees");
-        }
 
         message.success("Login successful!");
 

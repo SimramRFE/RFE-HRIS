@@ -1,6 +1,7 @@
 import React from "react";
 import { Card, Descriptions, Typography, Avatar } from "antd";
 import { UserOutlined } from "@ant-design/icons";
+import { formatPhoneNumber } from "../../services/phoneUtils";
 
 const { Title } = Typography;
 
@@ -47,7 +48,7 @@ const UserProfile = () => {
             <strong>{currentUser.emailOrUsername || "N/A"}</strong>
           </Descriptions.Item>
           <Descriptions.Item label="Mobile Number">
-            <strong>{currentUser.mobileNo || "N/A"}</strong>
+            <strong>{formatPhoneNumber(currentUser.mobileNo)}</strong>
           </Descriptions.Item>
           <Descriptions.Item label="Department">
             <strong>{currentUser.department || "N/A"}</strong>

@@ -1,5 +1,11 @@
 const mongoose = require('mongoose');
 
+const INTERNATIONAL_PHONE_REGEX = /^\+\d{7,15}$/;
+const phoneValidator = {
+  validator: (value) => !value || INTERNATIONAL_PHONE_REGEX.test(value),
+  message: 'Phone number must include country code (e.g. +971501234567)'
+};
+
 // Document subdocument schema
 const documentSchema = new mongoose.Schema({
   name: String,
@@ -33,7 +39,9 @@ const employeeSchema = new mongoose.Schema({
     trim: true
   },
   mobileNo: {
-    type: String
+    type: String,
+    trim: true,
+    validate: phoneValidator
   },
   dateOfBirth: String,
   dateOfJoining: String,
@@ -98,9 +106,17 @@ const employeeSchema = new mongoose.Schema({
   
   // Emergency Contact
   fatherName: String,
-  emergencyMobileNumber: String,
+  emergencyMobileNumber: {
+    type: String,
+    trim: true,
+    validate: phoneValidator
+  },
   emergencyRelationship: String,
-  alternateEmergencyContact: String,
+  alternateEmergencyContact: {
+    type: String,
+    trim: true,
+    validate: phoneValidator
+  },
   alternateRelationship: String,
   
   // Salary

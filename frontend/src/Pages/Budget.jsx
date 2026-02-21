@@ -31,6 +31,7 @@ import {
 } from "@ant-design/icons";
 import { expenseAPI } from "../services/api";
 import dayjs from "dayjs";
+import { DATE_DISPLAY_FORMAT, formatDate } from "../services/dateUtils";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -134,7 +135,7 @@ const Budget = () => {
       dataIndex: "date",
       key: "date",
       width: "12%",
-      render: (date) => dayjs(date).format("MMM DD, YYYY"),
+      render: (date) => formatDate(date),
       sorter: (a, b) => new Date(a.date) - new Date(b.date),
     },
     {
@@ -468,7 +469,7 @@ const Budget = () => {
             label="Date"
             initialValue={dayjs()}
           >
-            <DatePicker size="large" style={{ width: "100%" }} format="YYYY-MM-DD" />
+            <DatePicker size="large" style={{ width: "100%" }} format={DATE_DISPLAY_FORMAT} />
           </Form.Item>
 
           <Form.Item name="notes" label="Notes (Optional)">

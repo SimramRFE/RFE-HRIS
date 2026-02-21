@@ -46,7 +46,8 @@
   color: #fff !important;
 }
 
-.employee-modal-tabs.ant-tabs-card>.ant-tabs-nav .ant-tabs-tab-active {
+.employee-modal-tabs.ant-tabs-card>.ant-tabs-nav .ant-tabs-tab-active,
+:where(.css-dev-only-do-not-override-mncuj7).ant-tabs-card.ant-tabs-top>.ant-tabs-nav .ant-tabs-tab-active {
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
   border-color: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
 
@@ -56,9 +57,19 @@
   color: #40b606 !important;
   ;
 }
-
+.ant-btn-variant-solid:not(:disabled):not(.ant-btn-disabled):hover {
+    background: #40b606!important;
+}
+:where(.css-dev-only-do-not-override-mncuj7).ant-btn-variant-solid {
+    color: #fff;
+    background: #40b606 ;
+}
 .employee-modal-tabs.ant-tabs-card>.ant-tabs-nav .ant-tabs-tab-active .ant-tabs-tab-btn {
   color: #fff !important;
+}
+
+:where(.css-dev-only-do-not-override-mncuj7).ant-tabs .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #fff;
 }
 
 .ant-modal .ant-modal-content {
@@ -87,7 +98,7 @@
 }
 
 .ant-modal .ant-modal-content {
-  background: url(https://w0.peakpx.com/wallpaper/414/545/HD-wallpaper-spots-shade-background-light.jpg);
+  background: url(https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTWoovpz2FFbHUHIzXEOP5y5HT0TuU2_Uqg0fbEm5aXW9tLDEqT);
   background-size: cover;
   background-position: center;
 }
@@ -103,6 +114,46 @@
   font-size: 18px !important;
   margin-bottom: 20px;
 }
+
 .ant-btn-variant-solid:not(:disabled):not(.ant-btn-disabled):hover {
-    background: #031c4e;
+  background: #031c4e;
 }
+
+:where(.css-dev-only-do-not-override-kk2c0l).ant-list {
+  width: 60%;
+}
+
+/* :where(.css-dev-only-do-not-override-kk2c0l).ant-card {
+width: 60%;
+} */
+:where(.css-dev-only-do-not-override-kk2c0l).ant-input-group .ant-input-group-addon {
+  background: #fff !important;
+}
+
+;
+
+:where(.css-dev-only-do-not-override-kk2c0l).ant-upload-wrapper .ant-upload-list .ant-upload-list-item .ant-upload-list-item-name {
+  color: #fff;
+}
+
+:where(.css-dev-only-do-not-override-mncuj7).ant-upload-wrapper .ant-upload-list .ant-upload-list-item .ant-upload-list-item-name {
+  color: #fff !important;
+}
+
+:where(.css-dev-only-do-not-override-mncuj7).ant-modal-confirm .ant-modal-confirm-title,
+:where(.css-dev-only-do-not-override-mncuj7).ant-modal-confirm .ant-modal-confirm-content {
+  color: #fff;
+}
+
+.employee-empty-warning-modal .ant-modal-content {
+  background: #fff !important;
+}
+
+.employee-empty-warning-modal .ant-modal-header {
+  background: transparent !important;
+}
+
+/* .employee-empty-warning-modal .ant-modal-confirm-title,
+.employee-empty-warning-modal .ant-modal-confirm-content {
+  color: #874d00 !important;
+} */

@@ -20,11 +20,16 @@ import {
   UserOutlined,
   PhoneOutlined,
   BankOutlined,
-  FileTextOutlined,
-  LaptopOutlined
+  FileTextOutlined
 } from "@ant-design/icons";
 import { employeeAPI, uploadAPI } from "../../services/api";
 import dayjs from "dayjs";
+import { DATE_DISPLAY_FORMAT } from "../../services/dateUtils";
+import {
+  normalizePhoneNumber,
+  PHONE_INPUT_PROPS,
+  PHONE_VALIDATION_RULE,
+} from "../../services/phoneUtils";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -67,6 +72,31 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
 
   const handleSubmit = async (values) => {
     try {
+      const hasAnyFormValue = Object.values(values).some((value) => {
+        if (dayjs.isDayjs(value)) {
+          return true;
+        }
+
+        if (Array.isArray(value)) {
+          return value.length > 0;
+        }
+
+        if (typeof value === "string") {
+          return value.trim() !== "";
+        }
+
+        return value !== undefined && value !== null;
+      });
+
+      if (!hasAnyFormValue && (!fileList || fileList.length === 0)) {
+        Modal.warning({
+          className: "employee-empty-warning-modal",
+          title: "No Employee Information",
+          content: "You have not give any information of employee.",
+        });
+        return;
+      }
+
       setLoading(true);
       let uploadedDocuments = [];
       console.log('Documents from form:', values.documents);
@@ -119,7 +149,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
 
       dateFields.forEach(field => {
         if (employeeData[field] && dayjs.isDayjs(employeeData[field])) {
-          employeeData[field] = employeeData[field].format('YYYY-MM-DD');
+          employeeData[field] = employeeData[field].format(DATE_DISPLAY_FORMAT);
         }
       });
 
@@ -138,13 +168,29 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
         }
       });
 
+      employeeData.fatherName = employeeData.guardianName;
+      employeeData.emergencyMobileNumber = employeeData.guardianMobileNumber;
+      employeeData.alternateEmergencyContact = employeeData.alternateGuardianMobileNumber;
+
+      employeeData.mobileNo = normalizePhoneNumber(employeeData.mobileNo);
+      employeeData.emergencyMobileNumber = normalizePhoneNumber(employeeData.emergencyMobileNumber);
+      employeeData.alternateEmergencyContact = normalizePhoneNumber(employeeData.alternateEmergencyContact);
+
+      delete employeeData.guardianName;
+      delete employeeData.guardianMobileNumber;
+      delete employeeData.alternateGuardianMobileNumber;
+
       // Remove confirmPassword from the data
       delete employeeData.confirmPassword;
 
       const response = await employeeAPI.create(employeeData);
 
       if (response.data.success) {
-        message.success("Employee added successfully!");
+        Modal.success({
+          style: { color: "#fff !important" },
+          title: "Success",
+          content: "Employee added successfully",
+        });
         form.resetFields();
         setEmployeeStatus("Tourist");
         setActiveTab("1");
@@ -210,15 +256,12 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
                 label="Mobile Number"
                 name="mobileNo"
                 rules={[
-                  {
-                    pattern: /^\+\d{1,4}\d{10}$/,
-                    message: "Use format like +971501234567 (10 digits after country code)",
-                  },
+                  PHONE_VALIDATION_RULE,
                 ]}
               >
                 <Input
-                  placeholder="Enter mobile number (e.g. +971501234567)"
-                  maxLength={15}
+                  placeholder="Enter contact number"
+                  {...PHONE_INPUT_PROPS}
                 />
               </Form.Item>
             </Col>
@@ -256,7 +299,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
           </Row>
 
           <Row gutter={16}>
-       
+
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Department"
@@ -405,7 +448,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
           <Divider orientation="left">Employment Details</Divider>
 
           <Row gutter={16}>
-            <Col xs={24} sm={12}>
+            {/* <Col xs={24} sm={12}>
               <Form.Item
                 label="Job Title / Designation"
                 name="jobTitle"
@@ -413,7 +456,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
               >
                 <Input placeholder="Enter job title" />
               </Form.Item>
-            </Col>
+            </Col> */}
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Salary"
@@ -422,10 +465,6 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
                 <Input placeholder="Enter salary" type="number" />
               </Form.Item>
             </Col>
-
-          </Row>
-
-          <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Work Location"
@@ -434,6 +473,10 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
                 <Input placeholder="Enter work location" />
               </Form.Item>
             </Col>
+          </Row>
+
+          <Row gutter={16}>
+
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Reporting Manager"
@@ -442,10 +485,6 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
                 <Input placeholder="Enter reporting manager name" />
               </Form.Item>
             </Col>
-
-          </Row>
-
-          <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Reference Person"
@@ -658,29 +697,29 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
-                label="Father's Name"
-                name="fatherName"
-              // rules={[{ required: true, message: "Please enter father's name" }]}
+                label="Guardian's Name"
+                name="guardianName"
+              // rules={[{ required: true, message: "Please enter guardian's name" }]}
               >
-                <Input placeholder="Enter father's name" />
+                <Input placeholder="Enter guardian's name" />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item
-                label="Emergency Mobile Number"
-                name="emergencyMobileNumber"
+                label=" Guardian's Mobile Number"
+                name="guardianMobileNumber"
                 rules={[
-                  // { required: true, message: "Please enter emergency contact" },
-                  { pattern: /^[0-9]{10}$/, message: "Enter valid 10-digit number" }
+                  // { required: true, message: "Please enter mobile number" },
+                  PHONE_VALIDATION_RULE
                 ]}
               >
-                <Input placeholder="Enter emergency contact number" maxLength={10} />
+                <Input placeholder="Enter contact number" {...PHONE_INPUT_PROPS} />
               </Form.Item>
             </Col>
           </Row>
 
           <Row gutter={16}>
-            <Col xs={24} sm={12}>
+            {/* <Col xs={24} sm={12}>
               <Form.Item
                 label="Relationship to Employee"
                 name="emergencyRelationship"
@@ -695,21 +734,21 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
                   <Option value="Other">Other</Option>
                 </Select>
               </Form.Item>
-            </Col>
+            </Col> */}
             <Col xs={24} sm={12}>
               <Form.Item
-                label="Alternate Emergency Contact"
-                name="alternateEmergencyContact"
+                label="Alternate Mobile Number"
+                name="alternateGuardianMobileNumber"
                 rules={[
-                  { pattern: /^[0-9]{10}$/, message: "Enter valid 10-digit number" }
+                  PHONE_VALIDATION_RULE
                 ]}
               >
-                <Input placeholder="Enter alternate contact number" maxLength={10} />
+                <Input placeholder="Enter alternate contact number" {...PHONE_INPUT_PROPS} />
               </Form.Item>
             </Col>
           </Row>
 
-          <Row gutter={16}>
+          {/* <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Alternate Contact Relationship"
@@ -725,7 +764,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
                 </Select>
               </Form.Item>
             </Col>
-          </Row>
+          </Row> */}
         </>
       )
     },
@@ -829,72 +868,6 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
           </Row>
         </>
       )
-    },
-    {
-      key: '5',
-      label: (
-        <span>
-          <LaptopOutlined /> IT & Access
-        </span>
-      ),
-      children: (
-        <>
-          {/* <Title level={5} style={{ marginTop: 0, marginBottom: 16, color: "#1a1a2e" }}>
-            IT & Access Details
-          </Title> */}
-          <Divider orientation="left">  IT & Access Details</Divider>
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                label="Office Email ID"
-                name="officeEmail"
-                rules={[
-                  { type: 'email', message: 'Please enter valid email' }
-                ]}
-              >
-                <Input placeholder="Enter office email" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                label="System Username"
-                name="systemUsername"
-              >
-                <Input placeholder="Enter system username" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                label="Laptop / Device Serial Number"
-                name="deviceSerialNumber"
-              >
-                <Input placeholder="Enter device serial number" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Divider orientation="left">Notes</Divider>
-
-          <Row gutter={16}>
-            <Col xs={24}>
-              <Form.Item
-                label=""
-                name="notes"
-              >
-                <TextArea
-                  rows={4}
-                  placeholder="Enter any additional notes or comments about the employee"
-                  maxLength={500}
-                  showCount
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-        </>
-      )
     }
   ];
 
@@ -949,6 +922,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
             <Space>
               {activeTab !== "1" && (
                 <Button
+                  htmlType="button"
                   size="large"
                   onClick={() => {
                     const currentTab = parseInt(activeTab);
@@ -959,6 +933,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
                 </Button>
               )}
               <Button
+                htmlType="button"
                 size="large"
                 onClick={() => {
                   form.resetFields();
@@ -970,17 +945,18 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
               >
                 Cancel
               </Button>
-              {activeTab !== "5" ? (
+              {activeTab !== "4" ? (
                 <Button
                   type="primary"
+                  htmlType="button"
                   size="large"
                   onClick={() => {
                     const currentTab = parseInt(activeTab);
                     setActiveTab(String(currentTab + 1));
                   }}
                   style={{
-                    background: "#031c4e",
-                    borderColor: "#031c4e"
+                    background: "#52c41a",
+                    borderColor: "#52c41a"
                   }}
                 >
                   Next
@@ -992,8 +968,8 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
                   size="large"
                   loading={loading}
                   style={{
-                    background: "#031c4e",
-                    borderColor: "#031c4e"
+                    background: "#52c41a",
+                    borderColor: "#52c41a"
                   }}
                 >
                   Add Employee

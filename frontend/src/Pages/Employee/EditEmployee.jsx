@@ -20,15 +20,22 @@ import {
   UserOutlined,
   PhoneOutlined,
   BankOutlined,
-  FileTextOutlined,
-  LaptopOutlined
+  FileTextOutlined
 } from "@ant-design/icons";
 import dayjs from 'dayjs';
 import { employeeAPI, uploadAPI } from "../../services/api";
+import { DATE_DISPLAY_FORMAT, formatDate, toDayjsDate } from "../../services/dateUtils";
+import {
+  normalizePhoneNumber,
+  PHONE_INPUT_PROPS,
+  PHONE_VALIDATION_RULE,
+  toPhoneInputValue,
+} from "../../services/phoneUtils";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
 const { TextArea } = Input;
+const DEFAULT_VISA_COUNTRIES = ["UAE", "India", "USA", "UK", "Canada"];
 
 const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
   const [form] = Form.useForm();
@@ -36,12 +43,39 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("1");
   const [fileList, setFileList] = useState([]);
+  const [visaCountryOptions, setVisaCountryOptions] = useState(DEFAULT_VISA_COUNTRIES);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const fetchVisaCountries = async () => {
+      try {
+        const response = await employeeAPI.getVisaCountries();
+        const countriesFromApi = Array.isArray(response?.data?.data)
+          ? response.data.data
+          : [];
+
+        const mergedCountries = [...new Set([...DEFAULT_VISA_COUNTRIES, ...countriesFromApi])]
+          .map((country) => (typeof country === "string" ? country.trim() : ""))
+          .filter(Boolean)
+          .sort((a, b) => a.localeCompare(b));
+
+        setVisaCountryOptions(mergedCountries.length ? mergedCountries : DEFAULT_VISA_COUNTRIES);
+      } catch (error) {
+        setVisaCountryOptions(DEFAULT_VISA_COUNTRIES);
+      }
+    };
+
+    fetchVisaCountries();
+  }, [open]);
 
   useEffect(() => {
     if (employee && open) {
       // Convert date strings to dayjs objects
       const formData = { ...employee };
-      
+
       const dateFields = [
         'dateOfBirth',
         'dateOfJoining',
@@ -57,10 +91,21 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
 
       dateFields.forEach(field => {
         if (formData[field]) {
-          // Parse dates in YYYY-MM-DD format from backend
-          formData[field] = dayjs(formData[field], 'YYYY-MM-DD');
+          formData[field] = toDayjsDate(formData[field]);
         }
       });
+
+      formData.guardianName = formData.guardianName || formData.fatherName;
+      formData.guardianMobileNumber = formData.guardianMobileNumber || formData.emergencyMobileNumber;
+      formData.alternateGuardianMobileNumber = formData.alternateGuardianMobileNumber || formData.alternateEmergencyContact;
+      formData.mobileNo = toPhoneInputValue(formData.mobileNo);
+      formData.guardianMobileNumber = toPhoneInputValue(formData.guardianMobileNumber);
+      formData.alternateGuardianMobileNumber = toPhoneInputValue(formData.alternateGuardianMobileNumber);
+      formData.department = formData.department ? [formData.department] : undefined;
+      formData.company = formData.company ? [formData.company] : undefined;
+      formData.countryOfVisaIssuance = formData.countryOfVisaIssuance
+        ? [formData.countryOfVisaIssuance]
+        : undefined;
 
       form.setFieldsValue(formData);
       setEmployeeStatus(employee.employeeStatus || "Tourist");
@@ -71,14 +116,14 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
   const handleSubmit = async (values) => {
     try {
       setLoading(true);
-      
+
       // Handle file uploads first
       let uploadedDocuments = (employee && employee.documents) || [];
-      
+
       // Use fileList state instead of values.documents
       if (fileList && fileList.length > 0) {
         const newFiles = fileList.filter(file => file.originFileObj);
-        
+
         if (newFiles.length > 0) {
           const formData = new FormData();
           newFiles.forEach(file => {
@@ -96,9 +141,9 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
           }
         }
       }
-      
+
       const employeeData = { ...values };
-      
+
       // Add uploaded documents to employee data
       employeeData.documents = uploadedDocuments;
 
@@ -118,10 +163,34 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
 
       dateFields.forEach(field => {
         if (employeeData[field] && dayjs.isDayjs(employeeData[field])) {
-          employeeData[field] = employeeData[field].format('YYYY-MM-DD');
+          employeeData[field] = employeeData[field].format(DATE_DISPLAY_FORMAT);
         }
       });
-      
+
+      if (Array.isArray(employeeData.department)) {
+        employeeData.department = employeeData.department[0] || "";
+      }
+
+      if (Array.isArray(employeeData.company)) {
+        employeeData.company = employeeData.company[0] || "";
+      }
+
+      if (Array.isArray(employeeData.countryOfVisaIssuance)) {
+        employeeData.countryOfVisaIssuance = employeeData.countryOfVisaIssuance[0] || "";
+      }
+
+      employeeData.fatherName = employeeData.guardianName;
+      employeeData.emergencyMobileNumber = employeeData.guardianMobileNumber;
+      employeeData.alternateEmergencyContact = employeeData.alternateGuardianMobileNumber;
+
+      employeeData.mobileNo = normalizePhoneNumber(employeeData.mobileNo);
+      employeeData.emergencyMobileNumber = normalizePhoneNumber(employeeData.emergencyMobileNumber);
+      employeeData.alternateEmergencyContact = normalizePhoneNumber(employeeData.alternateEmergencyContact);
+
+      delete employeeData.guardianName;
+      delete employeeData.guardianMobileNumber;
+      delete employeeData.alternateGuardianMobileNumber;
+
       // Remove confirmPassword from the data
       delete employeeData.confirmPassword;
 
@@ -156,14 +225,14 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
         <>
           <Divider orientation="left">
             Basic Information
-            </Divider>
-          
+          </Divider>
+
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Employee Name"
                 name="name"
-                // rules={[{ required: true, message: "Please enter employee name" }]}
+              // rules={[{ required: true, message: "Please enter employee name" }]}
               >
                 <Input placeholder="Enter full name" />
               </Form.Item>
@@ -172,7 +241,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Employee Code"
                 name="employeeCode"
-                // rules={[{ required: true, message: "Please enter employee code" }]}
+              // rules={[{ required: true, message: "Please enter employee code" }]}
               >
                 <Input placeholder="Enter employee code" />
               </Form.Item>
@@ -185,11 +254,13 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
                 label="Mobile Number"
                 name="mobileNo"
                 rules={[
-                  // { required: true, message: "Please enter mobile number" },
-                  { pattern: /^[0-9]{10}$/, message: "Enter valid 10-digit number" }
+                  PHONE_VALIDATION_RULE,
                 ]}
               >
-                <Input placeholder="Enter mobile number" maxLength={10} />
+                <Input
+                  placeholder="Enter contact number"
+                  {...PHONE_INPUT_PROPS}
+                />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
@@ -218,7 +289,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Date of Joining"
                 name="dateOfJoining"
-                // rules={[{ required: true, message: "Please select joining date" }]}
+              // rules={[{ required: true, message: "Please select joining date" }]}
               >
                 <DatePicker style={{ width: '100%' }} format="DD-MM-YYYY" />
               </Form.Item>
@@ -230,15 +301,24 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Department"
                 name="department"
-                // rules={[{ required: true, message: "Please select department" }]}
+                normalize={(value) => (Array.isArray(value) ? value[0] : value)}
+              // rules={[{ required: true, message: "Please select department" }]}
               >
-                <Select placeholder="Select department">
-                  <Option value="HR">HR</Option>
-                  <Option value="Finance">Finance</Option>
-                  <Option value="IT">IT</Option>
-                  <Option value="Operations">Operations</Option>
-                  <Option value="Sales">Sales</Option>
-                  <Option value="Marketing">Marketing</Option>
+                <Select
+                  mode="tags"
+                  maxCount={1}
+                  placeholder="Select or type department"
+                  style={{ width: "100%" }}
+                  tokenSeparators={[","]}
+                  options={[
+                    { value: "HR", label: "HR" },
+                    { value: "Finance", label: "Finance" },
+                    { value: "IT", label: "IT" },
+                    { value: "Operations", label: "Operations" },
+                    { value: "Sales", label: "Sales" },
+                    { value: "Marketing", label: "Marketing" },
+                  ]}
+                >
                 </Select>
               </Form.Item>
             </Col>
@@ -246,12 +326,21 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Company"
                 name="company"
-                // rules={[{ required: true, message: "Please select company" }]}
+                normalize={(value) => (Array.isArray(value) ? value[0] : value)}
+              // rules={[{ required: true, message: "Please select company" }]}
               >
-                <Select placeholder="Select company">
-                  <Option value="RFE">RFE</Option>
-                  <Option value="Royal Tree">Royal Tree</Option>
-                  <Option value="Royal Falcon">Royal Falcon</Option>
+                <Select
+                  mode="tags"
+                  maxCount={1}
+                  placeholder="Select or type company"
+                  style={{ width: "100%" }}
+                  tokenSeparators={[","]}
+                  options={[
+                    { value: "RFE", label: "RFE" },
+                    { value: "Royal Tree", label: "Royal Tree" },
+                    { value: "Royal Falcon", label: "Royal Falcon" },
+                  ]}
+                >
                 </Select>
               </Form.Item>
             </Col>
@@ -262,7 +351,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Employee Status"
                 name="employeeStatus"
-                // rules={[{ required: true, message: "Please select employee status" }]}
+              // rules={[{ required: true, message: "Please select employee status" }]}
               >
                 <Select
                   placeholder="Select status"
@@ -277,7 +366,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Employee Role"
                 name="role"
-                // rules={[{ required: true, message: "Please enter employee role" }]}
+              // rules={[{ required: true, message: "Please enter employee role" }]}
               >
                 <Input placeholder="Enter employee role" />
               </Form.Item>
@@ -291,7 +380,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Gender"
                 name="gender"
-                // rules={[{ required: true, message: "Please select gender" }]}
+              // rules={[{ required: true, message: "Please select gender" }]}
               >
                 <Select placeholder="Select gender">
                   <Option value="Male">Male</Option>
@@ -304,7 +393,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Nationality"
                 name="nationality"
-                // rules={[{ required: true, message: "Please enter nationality" }]}
+              // rules={[{ required: true, message: "Please enter nationality" }]}
               >
                 <Input placeholder="Enter nationality" />
               </Form.Item>
@@ -378,7 +467,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
           <Divider orientation="left">Employment Details</Divider>
 
           <Row gutter={16}>
-            <Col xs={24} sm={12}>
+            {/* <Col xs={24} sm={12}>
               <Form.Item
                 label="Job Title / Designation"
                 name="jobTitle"
@@ -386,20 +475,16 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               >
                 <Input placeholder="Enter job title" />
               </Form.Item>
-            </Col>
+            </Col> */}
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Salary"
                 name="salary"
-                // rules={[{ required: true, message: "Please enter salary" }]}
+              // rules={[{ required: true, message: "Please enter salary" }]}
               >
                 <Input placeholder="Enter salary" type="number" />
               </Form.Item>
             </Col>
-
-          </Row>
-
-          <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Work Location"
@@ -408,6 +493,10 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
                 <Input placeholder="Enter work location" />
               </Form.Item>
             </Col>
+          </Row>
+
+          <Row gutter={16}>
+
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Reporting Manager"
@@ -416,10 +505,6 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
                 <Input placeholder="Enter reporting manager name" />
               </Form.Item>
             </Col>
-
-          </Row>
-
-          <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
                 label="Reference Person"
@@ -429,6 +514,8 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               </Form.Item>
             </Col>
           </Row>
+
+
 
 
         </>
@@ -493,7 +580,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
                   <Form.Item
                     label="Visa ID Number"
                     name="visaIdNumber"
-                    // rules={[{ required: true, message: "Please enter Visa ID number" }]}
+                  // rules={[{ required: true, message: "Please enter Visa ID number" }]}
                   >
                     <Input placeholder="Enter Visa ID number" />
                   </Form.Item>
@@ -502,7 +589,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
                   <Form.Item
                     label="Visa Issue Date"
                     name="visaIssueDate"
-                    // rules={[{ required: true, message: "Please select issue date" }]}
+                  // rules={[{ required: true, message: "Please select issue date" }]}
                   >
                     <DatePicker style={{ width: '100%' }} format="DD-MM-YYYY" />
                   </Form.Item>
@@ -514,39 +601,44 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
                   <Form.Item
                     label="Visa Expiry Date"
                     name="visaExpiryDate"
-                    // rules={[{ required: true, message: "Please select expiry date" }]}
+                  // rules={[{ required: true, message: "Please select expiry date" }]}
                   >
                     <DatePicker style={{ width: '100%' }} format="DD-MM-YYYY" />
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={12}>
+                {/* <Col xs={24} sm={12}>
                   <Form.Item
                     label="Visa Type"
                     name="visaType"
-                    // rules={[{ required: true, message: "Please enter visa type" }]}
+                  // rules={[{ required: true, message: "Please enter visa type" }]}
                   >
                     <Select placeholder="Select visa type">
                       <Option value="Tourist Visa">Tourist Visa</Option>
                       <Option value="Residence Visa">Residence Visa</Option>
                     </Select>
                   </Form.Item>
-                </Col>
+                </Col> */}
 
-              </Row>
-              <Row gutter={16}>
+              
                 <Col xs={24} sm={12}>
                   <Form.Item
                     label="Country of Visa Issuance"
                     name="countryOfVisaIssuance"
-                    // rules={[{ required: true, message: "Please enter Country of Visa Issuance" }]}
+                    normalize={(value) => (Array.isArray(value) ? value[0] : value)}
+                  // rules={[{ required: true, message: "Please enter Country of Visa Issuance" }]}
                   >
-                    <Select placeholder="Select Country of Visa Issuance" style={{ width: '100%' }} name="countryOfVisaIssuance" >
-                      <Option value="UAE">UAE</Option>
-                      <Option value="India">India</Option>
-                      <Option value="USA">USA</Option>
-                      <Option value="UK">UK</Option>
-                      <Option value="Canada">Canada</Option>
+                    <Select
+                      mode="tags"
+                      maxCount={1}
+                      placeholder="Select or type Country of Visa Issuance"
+                      style={{ width: "100%" }}
+                      tokenSeparators={[","]}
+                      options={visaCountryOptions.map((country) => ({
+                        value: country,
+                        label: country,
+                      }))}
+                    >
                     </Select>
                   </Form.Item>
                 </Col>
@@ -575,17 +667,17 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
             </Col>
           </Row>
 
-          
+
 
           {employee && employee.documents && employee.documents.length > 0 && (
             <div style={{ marginBottom: 16 }}>
-              <Typography.Text strong>Existing Documents:</Typography.Text>
+              <Typography.Text strong style={{ color: '#fff' }}>Existing Documents:</Typography.Text>
               <div style={{ marginTop: 8 }}>
                 {employee.documents.map((doc, index) => (
                   <div key={index} style={{ marginBottom: 8, padding: 8, background: '#f5f5f5', borderRadius: 4 }}>
                     <Typography.Text>{doc.name}</Typography.Text>
                     <div style={{ fontSize: 12, color: '#8c8c8c' }}>
-                      {(doc.size / 1024).toFixed(2)} KB - {new Date(doc.uploadDate).toLocaleDateString()}
+                      {(doc.size / 1024).toFixed(2)} KB - {formatDate(doc.uploadDate)}
                     </div>
                   </div>
                 ))}
@@ -594,7 +686,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
           )}
 
           <Form.Item
-            // label="Upload Documents"
+          // label="Upload Documents"
           >
             <Upload
               fileList={fileList}
@@ -609,7 +701,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
                 Upload Documents
               </Button>
             </Upload>
-            <Text type="secondary" style={{ fontSize: "12px", display: "block", marginTop: 4 }}>
+            <Text type="secondary" style={{ fontSize: "12px", display: "block", marginTop: 4 , color:'#fff'}}>
               Upload passport, visa, Emirates ID, and other relevant documents
             </Text>
           </Form.Item>
@@ -632,21 +724,21 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
-                label="Father's Name"
-                name="fatherName"
+                label="Guardian's Name"
+                name="guardianName"
               >
-                <Input placeholder="Enter father's name" />
+                <Input placeholder="Enter guardian's name" />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item
-                label="Emergency Mobile Number"
-                name="emergencyMobileNumber"
+                label="Guardian's Mobile Number"
+                name="guardianMobileNumber"
                 rules={[
-                  { pattern: /^[0-9]{10}$/, message: "Enter valid 10-digit number" }
+                  PHONE_VALIDATION_RULE
                 ]}
               >
-                <Input placeholder="Enter emergency contact number" maxLength={10} />
+                <Input placeholder="Enter contact number" {...PHONE_INPUT_PROPS} />
               </Form.Item>
             </Col>
           </Row>
@@ -654,46 +746,13 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
-                label="Relationship to Employee"
-                name="emergencyRelationship"
-              >
-                <Select placeholder="Select relationship">
-                  <Option value="Father">Father</Option>
-                  <Option value="Mother">Mother</Option>
-                  <Option value="Spouse">Spouse</Option>
-                  <Option value="Sibling">Sibling</Option>
-                  <Option value="Friend">Friend</Option>
-                  <Option value="Other">Other</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                label="Alternate Emergency Contact"
-                name="alternateEmergencyContact"
+                label="Alternate Mobile Number"
+                name="alternateGuardianMobileNumber"
                 rules={[
-                  { pattern: /^[0-9]{10}$/, message: "Enter valid 10-digit number" }
+                  PHONE_VALIDATION_RULE
                 ]}
               >
-                <Input placeholder="Enter alternate contact number" maxLength={10} />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                label="Alternate Contact Relationship"
-                name="alternateRelationship"
-              >
-                <Select placeholder="Select relationship">
-                  <Option value="Father">Father</Option>
-                  <Option value="Mother">Mother</Option>
-                  <Option value="Spouse">Spouse</Option>
-                  <Option value="Sibling">Sibling</Option>
-                  <Option value="Friend">Friend</Option>
-                  <Option value="Other">Other</Option>
-                </Select>
+                <Input placeholder="Enter alternate contact number" {...PHONE_INPUT_PROPS} />
               </Form.Item>
             </Col>
           </Row>
@@ -709,7 +768,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
       ),
       children: (
         <>
-        <Divider orientation="left">
+          <Divider orientation="left">
             Bank Account Information
           </Divider>
 
@@ -718,7 +777,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Bank Name"
                 name="bankName"
-                // rules={[{ required: true, message: "Please enter bank name" }]}
+              // rules={[{ required: true, message: "Please enter bank name" }]}
               >
                 <Input placeholder="Enter bank name" />
               </Form.Item>
@@ -727,7 +786,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Account Holder Name"
                 name="accountHolderName"
-                // rules={[{ required: true, message: "Please enter account holder name" }]}
+              // rules={[{ required: true, message: "Please enter account holder name" }]}
               >
                 <Input placeholder="Enter account holder name" />
               </Form.Item>
@@ -739,18 +798,37 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Account Number"
                 name="accountNumber"
-                // rules={[{ required: true, message: "Please enter account number" }]}
+              // rules={[{ required: true, message: "Please enter account number" }]}
               >
                 <Input placeholder="Enter account number" />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item
+                label="IBAN Number"
+                name="ibanNumber"
+              >
+                <Input placeholder="Enter IBAN number" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
                 label="IFSC Code"
                 name="ifscCode"
-                // rules={[{ required: true, message: "Please enter IFSC code" }]}
+              // rules={[{ required: true, message: "Please enter IFSC code" }]}
               >
                 <Input placeholder="Enter IFSC code" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Swift Code"
+                name="swiftCode"
+              >
+                <Input placeholder="Enter Swift code" />
               </Form.Item>
             </Col>
           </Row>
@@ -759,7 +837,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               <Form.Item
                 label="Account Type"
                 name="accountType"
-                // rules={[{ required: true, message: "Please select account type" }]}
+              // rules={[{ required: true, message: "Please select account type" }]}
               >
                 <Select placeholder="Select account type">
                   <Option value="Savings">Savings</Option>
@@ -776,72 +854,6 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
                 name="bankBranchAddress"
               >
                 <TextArea rows={3} placeholder="Enter bank branch address" />
-              </Form.Item>
-            </Col>
-          </Row>
-        </>
-      )
-    },
-    {
-      key: '5',
-      label: (
-        <span>
-          <LaptopOutlined /> IT & Access
-        </span>
-      ),
-      children: (
-        <>
-          <Divider orientation="left">
-            IT & Access Details
-          </Divider>
-
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                label="Office Email ID"
-                name="officeEmail"
-                rules={[
-                  { type: 'email', message: 'Please enter valid email' }
-                ]}
-              >
-                <Input placeholder="Enter office email" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                label="System Username"
-                name="systemUsername"
-              >
-                <Input placeholder="Enter system username" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                label="Laptop / Device Serial Number"
-                name="deviceSerialNumber"
-              >
-                <Input placeholder="Enter device serial number" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Divider orientation="left">Notes</Divider>
-
-          <Row gutter={16}>
-            <Col xs={24}>
-              <Form.Item
-                label="Additional Notes"
-                name="notes"
-              >
-                <TextArea
-                  rows={4}
-                  placeholder="Enter any additional notes or comments about the employee"
-                  maxLength={500}
-                  showCount
-                />
               </Form.Item>
             </Col>
           </Row>
@@ -901,6 +913,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
             <Space>
               {activeTab !== "1" && (
                 <Button
+                  htmlType="button"
                   size="large"
                   onClick={() => {
                     const currentTab = parseInt(activeTab);
@@ -911,6 +924,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
                 </Button>
               )}
               <Button
+                htmlType="button"
                 size="large"
                 onClick={() => {
                   form.resetFields();
@@ -922,17 +936,18 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               >
                 Cancel
               </Button>
-              {activeTab !== "5" ? (
+              {activeTab !== "4" ? (
                 <Button
                   type="primary"
+                  htmlType="button"
                   size="large"
                   onClick={() => {
                     const currentTab = parseInt(activeTab);
                     setActiveTab(String(currentTab + 1));
                   }}
                   style={{
-                    background: "#031c4e",
-                    borderColor: "#031c4e"
+                    background: "#52c41a",
+                    borderColor: "#52c41a"
                   }}
                 >
                   Next
@@ -944,8 +959,8 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
                   size="large"
                   loading={loading}
                   style={{
-                    background: "#031c4e",
-                    borderColor: "#031c4e"
+                    background: "#52c41a",
+                    borderColor: "#52c41a"
                   }}
                 >
                   Update Employee

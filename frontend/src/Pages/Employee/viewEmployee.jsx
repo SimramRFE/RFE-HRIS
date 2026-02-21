@@ -22,7 +22,6 @@ import {
   PhoneOutlined, 
   FileTextOutlined, 
   BankOutlined, 
-  LaptopOutlined,
   DownloadOutlined,
   FilePdfOutlined,
   FileImageOutlined,
@@ -32,6 +31,8 @@ import {
   CloseOutlined
 } from "@ant-design/icons";
 import { employeeAPI, uploadAPI } from "../../services/api";
+import { formatDate } from "../../services/dateUtils";
+import { formatPhoneNumber } from "../../services/phoneUtils";
 
 const { Title, Text } = Typography;
 
@@ -66,37 +67,52 @@ const ViewEmployee = ({ id, open, onClose }) => {
     const extension = fileName.split('.').pop().toLowerCase();
     switch (extension) {
       case 'pdf':
-        return <FilePdfOutlined style={{ fontSize: 24, color: '#ff4d4f' }} />;
+        return <FilePdfOutlined style={{ fontSize: 20, color: '#ff4d4f' }} />;
       case 'jpg':
       case 'jpeg':
       case 'png':
       case 'gif':
-        return <FileImageOutlined style={{ fontSize: 24, color: '#52c41a' }} />;
+        return <FileImageOutlined style={{ fontSize: 20, color: '#52c41a' }} />;
       case 'doc':
       case 'docx':
-        return <FileWordOutlined style={{ fontSize: 24, color: '#1890ff' }} />;
+        return <FileWordOutlined style={{ fontSize: 20, color: '#1890ff' }} />;
       case 'xls':
       case 'xlsx':
-        return <FileExcelOutlined style={{ fontSize: 24, color: '#52c41a' }} />;
+        return <FileExcelOutlined style={{ fontSize: 20, color: '#52c41a' }} />;
       default:
-        return <FileOutlined style={{ fontSize: 24, color: '#8c8c8c' }} />;
+        return <FileOutlined style={{ fontSize: 20, color: '#8c8c8c' }} />;
     }
   };
 
+  const getDocumentUrl = (file) => {
+    const rawUrl = file?.url || '';
+
+    if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
+      return rawUrl;
+    }
+
+    if (rawUrl.startsWith('/')) {
+      const apiBase = new URL(uploadAPI.getDocument('placeholder'));
+      return `${apiBase.origin}${rawUrl}`;
+    }
+
+    const filename = rawUrl.split('/').pop();
+    return uploadAPI.getDocument(filename);
+  };
+
   // Handle document download
-  const handleDownload = (document) => {
-    const filename = document.url.split('/').pop();
-    const link = document.createElement('a');
-    link.href = uploadAPI.getDocument(filename);
-    link.download = document.name;
+  const handleDownload = (file) => {
+    const documentUrl = getDocumentUrl(file);
+    const link = window.document.createElement('a');
+    link.href = documentUrl;
+    link.download = file.name;
     link.target = '_blank';
     link.click();
   };
 
   // Handle document view
-  const handleView = (document) => {
-    const filename = document.url.split('/').pop();
-    window.open(uploadAPI.getDocument(filename), '_blank');
+  const handleView = (file) => {
+    window.open(getDocumentUrl(file), '_blank');
   };
 
   const tabItems = employee ? [
@@ -118,36 +134,34 @@ const ViewEmployee = ({ id, open, onClose }) => {
             contentStyle={{ fontWeight: 400, paddingLeft: '20px' }}
           >
             <Descriptions.Item label="Employee Name">
-              <strong>{employee.name || "N/A"}</strong>
+              {employee.name || "N/A"}
             </Descriptions.Item>
             <Descriptions.Item label="Employee Code">
-              <strong>{employee.employeeCode || employee.id}</strong>
+              {employee.employeeCode || employee.id}
             </Descriptions.Item>
             <Descriptions.Item label="Mobile Number">
-              <strong>{employee.mobileNo || "N/A"}</strong>
+              {formatPhoneNumber(employee.mobileNo)}
             </Descriptions.Item>
             <Descriptions.Item label="Email Address">
-              <strong>{employee.email || "N/A"}</strong>
+              {employee.email || "N/A"}
             </Descriptions.Item>
             <Descriptions.Item label="Date of Birth">
-              {employee.dateOfBirth || "N/A"}
+              {formatDate(employee.dateOfBirth)}
             </Descriptions.Item>
             <Descriptions.Item label="Date of Joining">
-              {employee.dateOfJoining || "N/A"}
+              {formatDate(employee.dateOfJoining)}
             </Descriptions.Item>
             <Descriptions.Item label="Department">
-              <Tag color="blue">{employee.department || "N/A"}</Tag>
+              {employee.department || "N/A"}
             </Descriptions.Item>
             <Descriptions.Item label="Company">
-              <Tag color="purple">{employee.company || "N/A"}</Tag>
+              {employee.company || "N/A"}
             </Descriptions.Item>
             <Descriptions.Item label="Employee Status">
-              <Tag color={employee.employeeStatus === "Resident" ? "green" : "orange"}>
                 {employee.employeeStatus || "N/A"}
-              </Tag>
             </Descriptions.Item>
             <Descriptions.Item label="Employee Role">
-              <strong>{employee.role || "N/A"}</strong>
+              {employee.role || "N/A"}
             </Descriptions.Item>
           </Descriptions>
 
@@ -194,11 +208,11 @@ const ViewEmployee = ({ id, open, onClose }) => {
             labelStyle={{ fontWeight: 500, width: '42%', paddingLeft: '16px' }} 
             contentStyle={{ fontWeight: 400, paddingLeft: '20px' }}
           >
-            <Descriptions.Item label="Job Title / Designation">
-              <strong>{employee.jobTitle || "N/A"}</strong>
-            </Descriptions.Item>
+            {/* <Descriptions.Item label="Job Title / Designation">
+              {employee.jobTitle || "N/A"}
+            </Descriptions.Item> */}
             <Descriptions.Item label="Salary">
-              <strong style={{ color: "#52c41a" }}>{employee.salary ? `$${employee.salary.toLocaleString()}` : "N/A"}</strong>
+              {employee.salary ? `${employee.salary.toLocaleString()}` : "N/A"}
             </Descriptions.Item>
             <Descriptions.Item label="Work Location">
               {employee.workLocation || "N/A"}
@@ -231,16 +245,16 @@ const ViewEmployee = ({ id, open, onClose }) => {
             contentStyle={{ fontWeight: 400, paddingLeft: '20px' }}
           >
             <Descriptions.Item label="Passport Number">
-              <strong>{employee.passportNumber || "N/A"}</strong>
+              {employee.passportNumber || "N/A"}
             </Descriptions.Item>
             <Descriptions.Item label="Passport Issue Date">
-              {employee.passportIssueDate || "N/A"}
+              {formatDate(employee.passportIssueDate)}
             </Descriptions.Item>
             <Descriptions.Item label="Passport Issue Place">
               {employee.passportIssuePlace || "N/A"}
             </Descriptions.Item>
             <Descriptions.Item label="Passport Expiry Date">
-              {employee.passportExpiryDate || "N/A"}
+              {formatDate(employee.passportExpiryDate)}
             </Descriptions.Item>
           </Descriptions>
 
@@ -256,17 +270,17 @@ const ViewEmployee = ({ id, open, onClose }) => {
                 contentStyle={{ fontWeight: 400, paddingLeft: '20px' }}
               >
                 <Descriptions.Item label="Visa ID Number">
-                  <strong>{employee.visaIdNumber || "N/A"}</strong>
+                  {employee.visaIdNumber || "N/A"}
                 </Descriptions.Item>
                 <Descriptions.Item label="Visa Issue Date">
-                  {employee.visaIssueDate || "N/A"}
+                  {formatDate(employee.visaIssueDate)}
                 </Descriptions.Item>
                 <Descriptions.Item label="Visa Expiry Date">
-                  {employee.visaExpiryDate || "N/A"}
+                  {formatDate(employee.visaExpiryDate)}
                 </Descriptions.Item>
-                <Descriptions.Item label="Visa Type">
+                {/* <Descriptions.Item label="Visa Type">
                   {employee.visaType || "N/A"}
-                </Descriptions.Item>
+                </Descriptions.Item> */}
                 <Descriptions.Item label="Country of Visa Issuance">
                   {employee.countryOfVisaIssuance || "N/A"}
                 </Descriptions.Item>
@@ -288,13 +302,13 @@ const ViewEmployee = ({ id, open, onClose }) => {
               {employee.drivingLicenseNumber || "N/A"}
             </Descriptions.Item>
             <Descriptions.Item label="Driving License Expiry">
-              {employee.drivingLicenseExpiry || "N/A"}
+              {formatDate(employee.drivingLicenseExpiry)}
             </Descriptions.Item>
           </Descriptions>
 
           <Divider />
 
-          <div style={{ marginTop: 24 }}>
+          {/* <div style={{ marginTop: 24 }}>
             <Title level={5}>Uploaded Documents</Title>
             {employee.documents && employee.documents.length > 0 ? (
               <Row gutter={[16, 16]}>
@@ -345,7 +359,7 @@ const ViewEmployee = ({ id, open, onClose }) => {
             ) : (
               <Text type="secondary">No documents uploaded</Text>
             )}
-          </div>
+          </div> */}
         </div>
       ),
     },
@@ -366,20 +380,14 @@ const ViewEmployee = ({ id, open, onClose }) => {
             labelStyle={{ fontWeight: 500, width: '42%', paddingLeft: '16px' }} 
             contentStyle={{ fontWeight: 400, paddingLeft: '20px' }}
           >
-          <Descriptions.Item label="Father's Name">
-            <strong>{employee.fatherName || "N/A"}</strong>
+            <Descriptions.Item label="Guardian's Name">
+              {employee.guardianName || employee.fatherName || "N/A"}
           </Descriptions.Item>
-          <Descriptions.Item label="Emergency Mobile Number">
-            <strong>{employee.emergencyMobileNumber || "N/A"}</strong>
+            <Descriptions.Item label="Guardian's Mobile Number">
+              {formatPhoneNumber(employee.guardianMobileNumber || employee.emergencyMobileNumber)}
           </Descriptions.Item>
-          <Descriptions.Item label="Relationship to Employee">
-            {employee.emergencyRelationship || "N/A"}
-          </Descriptions.Item>
-          <Descriptions.Item label="Alternate Emergency Contact">
-            {employee.alternateEmergencyContact || "N/A"}
-          </Descriptions.Item>
-          <Descriptions.Item label="Alternate Contact Relationship">
-            {employee.alternateRelationship || "N/A"}
+            <Descriptions.Item label="Alternate Mobile Number">
+              {formatPhoneNumber(employee.alternateGuardianMobileNumber || employee.alternateEmergencyContact)}
           </Descriptions.Item>
           </Descriptions>
         </div>
@@ -402,70 +410,29 @@ const ViewEmployee = ({ id, open, onClose }) => {
             labelStyle={{ fontWeight: 500, width: '42%', paddingLeft: '16px' }} 
             contentStyle={{ fontWeight: 400, paddingLeft: '20px' }}
           >
-          <Descriptions.Item label="Bank Name">
-            <strong>{employee.bankName || "N/A"}</strong>
-          </Descriptions.Item>
-          <Descriptions.Item label="Account Holder Name">
-            <strong>{employee.accountHolderName || "N/A"}</strong>
-          </Descriptions.Item>
-          <Descriptions.Item label="Account Number">
-            <strong>{employee.accountNumber || "N/A"}</strong>
-          </Descriptions.Item>
-          <Descriptions.Item label="IFSC Code">
-            {employee.ifscCode || "N/A"}
-          </Descriptions.Item>
-          <Descriptions.Item label="Account Type">
-            <Tag color="blue">{employee.accountType || "N/A"}</Tag>
-          </Descriptions.Item>
-          <Descriptions.Item label="Bank Branch Address">
-            {employee.bankBranchAddress || "N/A"}
-          </Descriptions.Item>
-        </Descriptions>
-        </div>
-      ),
-    },
-    {
-      key: "5",
-      label: (
-        <span>
-          <LaptopOutlined /> IT & Access
-        </span>
-      ),
-      children: (
-        <div style={{ padding: "8px 4px" }}>
-          <Descriptions 
-            title="IT & Access Details" 
-            bordered 
-            column={1} 
-            size="middle"
-            labelStyle={{ fontWeight: 500, width: '42%', paddingLeft: '16px' }} 
-            contentStyle={{ fontWeight: 400, paddingLeft: '20px' }}
-          >
-            <Descriptions.Item label="Office Email ID">
-              <strong>{employee.officeEmail || "N/A"}</strong>
+            <Descriptions.Item label="Bank Name">
+              {employee.bankName || "N/A"}
             </Descriptions.Item>
-            <Descriptions.Item label="System Username">
-              {employee.systemUsername || "N/A"}
+            <Descriptions.Item label="Account Holder Name">
+              {employee.accountHolderName || "N/A"}
             </Descriptions.Item>
-            <Descriptions.Item label="Laptop / Device Serial Number">
-              {employee.deviceSerialNumber || "N/A"}
+            <Descriptions.Item label="Account Number">
+              {employee.accountNumber || "N/A"}
             </Descriptions.Item>
-          </Descriptions>
-
-          <Divider style={{ margin: "20px 0" }} />
-
-          <Descriptions 
-            title="Additional Notes" 
-            bordered 
-            column={1} 
-            size="middle"
-            labelStyle={{ fontWeight: 500, width: '42%', paddingLeft: '16px' }} 
-            contentStyle={{ fontWeight: 400, paddingLeft: '20px' }}
-          >
-            <Descriptions.Item label="Notes">
-              <div style={{ whiteSpace: 'pre-wrap' }}>
-                {employee.notes || "N/A"}
-              </div>
+            <Descriptions.Item label="IBAN Number">
+              {employee.ibanNumber || "N/A"}
+            </Descriptions.Item>
+            <Descriptions.Item label="IFSC Code">
+              {employee.ifscCode || "N/A"}
+            </Descriptions.Item>
+            <Descriptions.Item label="Swift Code">
+              {employee.swiftCode || "N/A"}
+            </Descriptions.Item>
+            <Descriptions.Item label="Account Type">
+              {employee.accountType || "N/A"}
+            </Descriptions.Item>
+            <Descriptions.Item label="Bank Branch Address">
+              {employee.bankBranchAddress || "N/A"}
             </Descriptions.Item>
           </Descriptions>
         </div>
@@ -475,34 +442,48 @@ const ViewEmployee = ({ id, open, onClose }) => {
 
   return (
     <Drawer
-      title={
-        employee && (
-          <Space size={16}>
-            <Avatar
-              size={52}
-              style={{ backgroundColor: "#031c4e" }}
-              icon={<UserOutlined />}
-            >
-              {employee.name?.charAt(0)}
-            </Avatar>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 17, marginBottom: 4 }}>{employee.name}</div>
-              <Space size={12}>
-                <Text type="secondary" style={{ fontSize: 13 }}>
-                  {employee.employeeCode || employee.id}
-                </Text>
-                <Tag color={employee.employeeStatus === "Resident" ? "green" : "orange"}>
-                  {employee.employeeStatus || "N/A"}
-                </Tag>
-              </Space>
-            </div>
-          </Space>
-        )
-      }
+      // title={
+      //   employee && (
+      //     <Space size={16}>
+      //       <Avatar
+      //         size={52}
+      //         style={{ backgroundColor: "#031c4e" }}
+      //         icon={<UserOutlined />}
+      //       >
+      //         {employee.name?.charAt(0)}
+      //       </Avatar>
+      //       <div>
+      //         <div style={{ fontWeight: 600, fontSize: 17, marginBottom: 4 }}>{employee.name}</div>
+      //         <Space size={12}>
+      //           <Text type="secondary" style={{ fontSize: 13 }}>
+      //             {employee.employeeCode || employee.id}
+      //           </Text>
+      //           <Tag color={employee.employeeStatus === "Resident" ? "green" : "orange"}>
+      //             {employee.employeeStatus || "N/A"}
+      //           </Tag>
+      //         </Space>
+      //       </div>
+      //     </Space>
+      //   )
+      // }
       width={780}
       open={open}
       onClose={onClose}
-      closeIcon={<CloseOutlined />}
+      title=" "
+      closable={false}
+      extra={
+        <Button
+          type="text"
+          icon={<CloseOutlined style={{ fontSize: 18 }} />}
+          onClick={onClose}
+          aria-label="Close"
+          style={{ marginRight: -6, marginTop: -4 }}
+        />
+      }
+      styles={{
+        header: { padding: "8px 8px 0 16px", borderBottom: "none" },
+        body: { paddingTop: 0 }
+      }}
       mask={false}
       // extra={
       //   employee && (
@@ -529,14 +510,14 @@ const ViewEmployee = ({ id, open, onClose }) => {
           {/* Uploaded Documents Section */}
           {employee.documents && employee.documents.length > 0 && (
             <div style={{ marginBottom: 28 }}>
-              <Space style={{ marginBottom: 16 }} size={12}>
+              {/* <Space style={{ marginBottom: 16 }} size={12}>
                 <FileTextOutlined style={{ color: "#1890ff", fontSize: 18 }} />
                 <Text strong style={{ fontSize: 15 }}>Uploaded Documents</Text>
                 <Tag color="blue">{employee.documents.length} file(s)</Tag>
-              </Space>
+              </Space> */}
               <Row gutter={[12, 12]}>
                 {employee.documents.map((doc, index) => (
-                  <Col xs={24} sm={12} key={index}>
+                  <Col xs={24} sm={12} md={8} key={index}>
                     <Card
                       size="small"
                       hoverable
@@ -544,7 +525,7 @@ const ViewEmployee = ({ id, open, onClose }) => {
                         borderRadius: 8,
                         border: "1px solid #e8e8e8"
                       }}
-                      styles={{ body: { padding: 10 } }}
+                      styles={{ body: { padding: 8 } }}
                     >
                       <Space direction="vertical" style={{ width: "100%" }} size="small">
                         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -555,13 +536,13 @@ const ViewEmployee = ({ id, open, onClose }) => {
                               ellipsis 
                               style={{ 
                                 display: "block",
-                                fontSize: 12
+                                fontSize: 11
                               }}
                               title={doc.name}
                             >
                               {doc.name}
                             </Text>
-                            <Text type="secondary" style={{ fontSize: 11 }}>
+                            <Text type="secondary" style={{ fontSize: 10 }}>
                               {doc.size ? `${(doc.size / 1024).toFixed(2)} KB` : "N/A"}
                             </Text>
                           </div>

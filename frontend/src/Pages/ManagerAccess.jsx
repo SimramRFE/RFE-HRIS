@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Card, List, Checkbox, Spin, Typography, message, Button, Modal, Input, Popconfirm } from "antd";
+import { Card, List, Spin, Typography, message, Button, Modal, Input, Popconfirm } from "antd";
 import { authAPI } from "../services/api";
-import pageBackground from "../assets/bg.jpg";
 
 const { Title } = Typography;
 
@@ -112,75 +111,95 @@ const ManagerAccess = () => {
   };
 
   return (
-    <div style={{ padding: "10px", minHeight: "100vh", backgroundImage: `url(${pageBackground})`, backgroundSize: "cover", backgroundPosition: "center" }}>
+    <div style={{ padding: "10px", minHeight: "100vh", background: "#f6f2f2", backgroundSize: "cover", backgroundPosition: "center" }}>
       <Card style={{ borderRadius: 10 }}>
-        <Title level={4} style={{ marginBottom: 16 }}>
-          Manager Access
-        </Title>
-
         {loading ? (
           <div style={{ textAlign: "center", padding: 24 }}>
             <Spin />
           </div>
         ) : (
-          <List
-            dataSource={managers}
-            locale={{ emptyText: "No managers found" }}
-            renderItem={(manager) => {
-              const rowBusy =
-                updatingManagerId === manager._id ||
-                deletingManagerId === manager._id ||
-                resettingManagerId === manager._id;
+          <>
+            <List
+              dataSource={managers}
+              locale={{ emptyText: "No managers found" }}
+              renderItem={(manager, index) => {
+                const rowBusy =
+                  updatingManagerId === manager._id ||
+                  deletingManagerId === manager._id ||
+                  resettingManagerId === manager._id;
 
-              return (
-              <List.Item>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, width: "100%" }} >
-                  <Checkbox
-                    checked={!!manager.isActive}
-                    disabled={rowBusy}
-                    onChange={(event) => handleManagerStatusChange(manager._id, event.target.checked)}
-                  />
-                  <div className="flex justify-between w-100">
-                    <div>
-                    <div style={{ fontWeight: 600 }}>{manager.username}</div>
-                    {/* <div style={{ fontSize: 12, color: "#666" }}>{manager.email}</div> */}
-                    </div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <Popconfirm
-                        title="Delete Manager"
-                        description={`Are you sure you want to delete ${manager.username}?`}
-                        okText="Delete"
-                        cancelText="Cancel"
-                        okButtonProps={{ danger: true }}
-                        onConfirm={() => handleDeleteManager(manager)}
-                        disabled={rowBusy}
-                      >
+                const isActive = !!manager.isActive;
+
+                return (
+                  <List.Item>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "80px 1fr 180px 140px 120px",
+                        gap: 12,
+                        alignItems: "center",
+                        width: "100%",
+                      }}
+                    >
+                      <div style={{ fontWeight: 600, fontSize: 18 }}>{index + 1}.</div>
+                      <div style={{ fontWeight: 600, fontSize: 18 }}>{manager.username}</div>
+                      <div>
                         <Button
-                          color="red"
+                          color="green"
                           variant="solid"
-                          danger
-                          loading={deletingManagerId === manager._id}
+                          loading={resettingManagerId === manager._id}
+                          disabled={rowBusy}
+                          onClick={() => openResetPasswordModal(manager)}
+                        >
+                          Reset Password
+                        </Button>
+                      </div>
+                      <div>
+                        <Popconfirm
+                          title={isActive ? "Suspend Manager" : "Unsuspend Manager"}
+                          description={`Are you sure you want to ${isActive ? "suspend" : "unsuspend"} ${manager.username}?`}
+                          okText={isActive ? "Suspend" : "Unsuspend"}
+                          cancelText="Cancel"
+                          onConfirm={() => handleManagerStatusChange(manager._id, !isActive)}
                           disabled={rowBusy}
                         >
-                          delete
-                        </Button>
-                      </Popconfirm>
-                      <Button
-                        color="green"
-                        variant="solid"
-                        loading={resettingManagerId === manager._id}
-                        disabled={rowBusy}
-                        onClick={() => openResetPasswordModal(manager)}
-                      >
-                        reset Password
-                      </Button>
+                          <Button
+                            color={isActive ? "orange" : "green"}
+                            variant="solid"
+                            loading={updatingManagerId === manager._id}
+                            disabled={rowBusy}
+                          >
+                            {isActive ? "Suspend" : "Unsuspend"}
+                          </Button>
+                        </Popconfirm>
+                      </div>
+                      <div>
+                        <Popconfirm
+                          title="Delete Manager"
+                          description={`Are you sure you want to delete ${manager.username}?`}
+                          okText="Delete"
+                          cancelText="Cancel"
+                          okButtonProps={{ danger: true }}
+                          onConfirm={() => handleDeleteManager(manager)}
+                          disabled={rowBusy}
+                        >
+                          <Button
+                            color="red"
+                            variant="solid"
+                            danger
+                            loading={deletingManagerId === manager._id}
+                            disabled={rowBusy}
+                          >
+                            Delete
+                          </Button>
+                        </Popconfirm>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </List.Item>
-              );
-            }}
-          />
+                  </List.Item>
+                );
+              }}
+            />
+          </>
         )}
       </Card>
 

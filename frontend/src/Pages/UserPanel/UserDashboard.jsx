@@ -12,6 +12,7 @@ import {
   BankOutlined,
   SolutionOutlined,
 } from "@ant-design/icons";
+import { formatPhoneNumber } from "../../services/phoneUtils";
 
 const { Title } = Typography;
 
@@ -196,7 +197,7 @@ const UserDashboard = () => {
               </span>
             }
           >
-            <strong>{currentUser.mobileNo || "N/A"}</strong>
+            <strong>{formatPhoneNumber(currentUser.mobileNo)}</strong>
           </Descriptions.Item>
         </Descriptions>
       </Card>

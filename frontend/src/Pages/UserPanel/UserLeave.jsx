@@ -23,6 +23,7 @@ import {
   EyeOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
+import { DATE_DISPLAY_FORMAT, formatDate, formatDateTime } from "../../services/dateUtils";
 
 // TabPane is now deprecated, using items prop instead
 const { TextArea } = Input;
@@ -63,8 +64,8 @@ const UserLeave = () => {
       employeeEmail: currentUser.emailOrUsername,
       department: currentUser.department,
       leaveType,
-      startDate: startDate.format('YYYY-MM-DD'),
-      endDate: endDate.format('YYYY-MM-DD'),
+      startDate: startDate.format(DATE_DISPLAY_FORMAT),
+      endDate: endDate.format(DATE_DISPLAY_FORMAT),
       numberOfDays: daysDiff,
       reason,
       status: 'pending',
@@ -124,11 +125,13 @@ const UserLeave = () => {
       title: 'Start Date',
       dataIndex: 'startDate',
       key: 'startDate',
+      render: (date) => formatDate(date),
     },
     {
       title: 'End Date',
       dataIndex: 'endDate',
       key: 'endDate',
+      render: (date) => formatDate(date),
     },
     {
       title: 'Days',
@@ -150,7 +153,7 @@ const UserLeave = () => {
       title: 'Applied Date',
       dataIndex: 'appliedDate',
       key: 'appliedDate',
-      render: (date) => new Date(date).toLocaleDateString('en-GB'),
+      render: (date) => formatDate(date),
     },
     {
       title: 'Actions',
@@ -318,6 +321,7 @@ const UserLeave = () => {
             <RangePicker 
               size="large" 
               style={{ width: '100%' }}
+              format={DATE_DISPLAY_FORMAT}
               disabledDate={(current) => current && current.toDate() < new Date().setHours(0,0,0,0)}
             />
           </Form.Item>
@@ -375,10 +379,10 @@ const UserLeave = () => {
                 </Tag>
               </Descriptions.Item>
               <Descriptions.Item label="Start Date">
-                {new Date(selectedLeave.startDate).toLocaleDateString('en-GB')}
+                {formatDate(selectedLeave.startDate)}
               </Descriptions.Item>
               <Descriptions.Item label="End Date">
-                {new Date(selectedLeave.endDate).toLocaleDateString('en-GB')}
+                {formatDate(selectedLeave.endDate)}
               </Descriptions.Item>
               <Descriptions.Item label="Number of Days">
                 {selectedLeave.numberOfDays} day(s)
@@ -389,7 +393,7 @@ const UserLeave = () => {
                 </Tag>
               </Descriptions.Item>
               <Descriptions.Item label="Applied Date" span={2}>
-                {new Date(selectedLeave.appliedDate).toLocaleString('en-GB')}
+                {formatDateTime(selectedLeave.appliedDate)}
               </Descriptions.Item>
               <Descriptions.Item label="Reason" span={2}>
                 <div style={{ 
@@ -403,7 +407,7 @@ const UserLeave = () => {
               </Descriptions.Item>
               {selectedLeave.approvedBy && (
                 <Descriptions.Item label="Approved By" span={2}>
-                  {selectedLeave.approvedBy} on {new Date(selectedLeave.approvedDate).toLocaleString('en-GB')}
+                  {selectedLeave.approvedBy} on {formatDateTime(selectedLeave.approvedDate)}
                 </Descriptions.Item>
               )}
               {selectedLeave.rejectionReason && (

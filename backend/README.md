@@ -111,7 +111,7 @@ Headers: { "Authorization": "Bearer <token>" }
   "employeeCode": "EMP001",
   "name": "Jane Smith",
   "email": "jane@company.com",
-  "mobileNo": "1234567890",
+  "mobileNo": "+971501234567",
   "department": "IT",
   "company": "RFE",
   "employeeStatus": "Resident",
