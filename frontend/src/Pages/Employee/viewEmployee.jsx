@@ -85,19 +85,7 @@ const ViewEmployee = ({ id, open, onClose }) => {
   };
 
   const getDocumentUrl = (file) => {
-    const rawUrl = file?.url || '';
-
-    if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
-      return rawUrl;
-    }
-
-    if (rawUrl.startsWith('/')) {
-      const apiBase = new URL(uploadAPI.getDocument('placeholder'));
-      return `${apiBase.origin}${rawUrl}`;
-    }
-
-    const filename = rawUrl.split('/').pop();
-    return uploadAPI.getDocument(filename);
+    return uploadAPI.resolveDocumentUrl(file?.url || file?.name || '');
   };
 
   // Handle document download

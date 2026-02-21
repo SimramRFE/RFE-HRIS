@@ -3,6 +3,49 @@ import axios from 'axios';
  const API_URL = import.meta.env.VITE_API_URL || 'https://gportalcms.com/api';
 // const API_URL = 'http://localhost:5000/api';
 
+const getApiOrigin = () => {
+  const fallbackOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+
+  try {
+    return new URL(API_URL, fallbackOrigin).origin;
+  } catch (error) {
+    return fallbackOrigin;
+  }
+};
+
+const getDocumentByFilename = (filename) => {
+  if (!filename) {
+    return '';
+  }
+
+  return `${getApiOrigin()}/uploads/documents/${filename}`;
+};
+
+export const resolveDocumentUrl = (rawUrl = '') => {
+  if (!rawUrl) {
+    return '';
+  }
+
+  const normalizedUrl = String(rawUrl).trim();
+
+  if (normalizedUrl.startsWith('http://') || normalizedUrl.startsWith('https://')) {
+    return normalizedUrl;
+  }
+
+  const uploadsOrigin = getApiOrigin();
+
+  if (normalizedUrl.startsWith('/')) {
+    return new URL(normalizedUrl, uploadsOrigin).toString();
+  }
+
+  if (normalizedUrl.includes('/uploads/')) {
+    return new URL(`/${normalizedUrl.replace(/^\/+/, '')}`, uploadsOrigin).toString();
+  }
+
+  const filename = normalizedUrl.split('/').pop();
+  return getDocumentByFilename(filename);
+};
+
 // Create axios instance
 const api = axios.create({
   baseURL: API_URL,
@@ -149,7 +192,8 @@ export const uploadAPI = {
       },
     });
   },
-  getDocument: (filename) => `${API_URL.replace('/api', '')}/uploads/documents/${filename}`,
+  getDocument: (filename) => getDocumentByFilename(filename),
+  resolveDocumentUrl,
   deleteDocument: (filename) => api.delete(`/upload/${filename}`),
 };
 
