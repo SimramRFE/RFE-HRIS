@@ -47,7 +47,7 @@
 }
 
 .employee-modal-tabs.ant-tabs-card>.ant-tabs-nav .ant-tabs-tab-active,
-:where(.css-dev-only-do-not-override-mncuj7).ant-tabs-card.ant-tabs-top>.ant-tabs-nav .ant-tabs-tab-active {
+.ant-tabs-card.ant-tabs-top>.ant-tabs-nav .ant-tabs-tab-active {
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
   border-color: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
 
@@ -60,7 +60,7 @@
 .ant-btn-variant-solid:not(:disabled):not(.ant-btn-disabled):hover {
     background: #40b606!important;
 }
-:where(.css-dev-only-do-not-override-mncuj7).ant-btn-variant-solid {
+.ant-btn-variant-solid {
     color: #fff;
     background: #40b606 ;
 }
@@ -68,7 +68,7 @@
   color: #fff !important;
 }
 
-:where(.css-dev-only-do-not-override-mncuj7).ant-tabs .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+.ant-tabs .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
   color: #fff;
 }
 
@@ -119,29 +119,23 @@
   background: #031c4e;
 }
 
-:where(.css-dev-only-do-not-override-kk2c0l).ant-list {
+.ant-list {
   width: 60%;
 }
 
 /* :where(.css-dev-only-do-not-override-kk2c0l).ant-card {
 width: 60%;
 } */
-:where(.css-dev-only-do-not-override-kk2c0l).ant-input-group .ant-input-group-addon {
+.ant-input-group .ant-input-group-addon {
   background: #fff !important;
 }
 
-;
-
-:where(.css-dev-only-do-not-override-kk2c0l).ant-upload-wrapper .ant-upload-list .ant-upload-list-item .ant-upload-list-item-name {
-  color: #fff;
-}
-
-:where(.css-dev-only-do-not-override-mncuj7).ant-upload-wrapper .ant-upload-list .ant-upload-list-item .ant-upload-list-item-name {
+.ant-upload-wrapper .ant-upload-list .ant-upload-list-item .ant-upload-list-item-name {
   color: #fff !important;
 }
 
-:where(.css-dev-only-do-not-override-mncuj7).ant-modal-confirm .ant-modal-confirm-title,
-:where(.css-dev-only-do-not-override-mncuj7).ant-modal-confirm .ant-modal-confirm-content {
+.ant-modal-confirm .ant-modal-confirm-title,
+.ant-modal-confirm .ant-modal-confirm-content {
   color: #fff;
 }
 
