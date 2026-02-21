@@ -167,7 +167,25 @@ export const authAPI = {
   resetManagerPassword: (id, data) => api.put(`/auth/managers/${id}/reset-password`, data),
   firstLoginPasswordChange: (data) => api.put('/auth/first-login-password-change', data),
   changePassword: (data) => api.put('/auth/change-password', data),
-  resetAdminPassword: (data) => api.put('/auth/admin/reset-password', data),
+  resetAdminPassword: async (data) => {
+    try {
+      return await api.put('/auth/admin/reset-password', data);
+    } catch (error) {
+      if (error?.response?.status !== 404) {
+        throw error;
+      }
+
+      try {
+        return await api.put('/auth/reset-password', data);
+      } catch (fallbackError) {
+        if (fallbackError?.response?.status !== 404) {
+          throw fallbackError;
+        }
+
+        return api.post('/auth/reset-password', data);
+      }
+    }
+  },
   getMe: () => api.get('/auth/me'),
   getManagerMe: () => managerApi.get('/auth/manager-me'),
   checkAdminExists: () => api.get('/auth/admin-exists'),
