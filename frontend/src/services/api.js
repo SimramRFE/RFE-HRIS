@@ -37,7 +37,6 @@ api.interceptors.request.use(
   }
 );
 
-// Request interceptor for manager API
 managerApi.interceptors.request.use(
   (config) => {
     const token =
