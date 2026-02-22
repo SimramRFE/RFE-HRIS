@@ -21,11 +21,11 @@ router.get('/visa-countries', getVisaCountries);
 // CRUD routes
 router.route('/')
   .get(getAllEmployees)
-  .post(authorize('admin', 'hr'), createEmployee);
+  .post(authorize('admin', 'hr', 'manager'), createEmployee);
 
 router.route('/:id')
   .get(getEmployee)
-  .put(authorize('admin', 'hr'), updateEmployee)
+  .put(authorize('admin', 'hr', 'manager'), updateEmployee)
   .delete(authorize('admin', 'hr'), deleteEmployee);
 
 module.exports = router;

@@ -237,7 +237,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
       const backendErrors = error.response?.data?.errors;
 
       if (error.response?.status === 403) {
-        errorMsg = `Access denied. Only admin or HR can add employees.`;
+        errorMsg = `Access denied. Only admin, HR, or manager can add employees.`;
       } else if (Array.isArray(backendErrors) && backendErrors.length > 0) {
         errorMsg = backendErrors.join(', ');
       } else {
