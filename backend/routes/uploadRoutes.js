@@ -42,7 +42,20 @@ router.get('/:filename', (req, res) => {
   try {
     const requestedFilename = decodeURIComponent(req.params.filename || '');
     const safeFilename = path.basename(requestedFilename);
-    const filePath = path.join(__dirname, '../uploads/documents', safeFilename);
+    const uploadsDir = path.join(__dirname, '../uploads/documents');
+    let filePath = path.join(uploadsDir, safeFilename);
+
+    if (!fs.existsSync(filePath) && safeFilename) {
+      const files = fs.readdirSync(uploadsDir);
+      const lowerSafeFilename = safeFilename.toLowerCase();
+      const matchedByOriginalName = files.find((name) =>
+        name.toLowerCase().endsWith(`-${lowerSafeFilename}`)
+      );
+
+      if (matchedByOriginalName) {
+        filePath = path.join(uploadsDir, matchedByOriginalName);
+      }
+    }
     
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({

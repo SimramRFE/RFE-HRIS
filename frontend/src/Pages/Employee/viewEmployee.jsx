@@ -92,32 +92,12 @@ const ViewEmployee = ({ id, open, onClose }) => {
   const handleDownload = async (file) => {
     try {
       const documentUrl = getDocumentUrl(file);
-      const token =
-        sessionStorage.getItem("token") ||
-        sessionStorage.getItem("managerToken") ||
-        localStorage.getItem("token") ||
-        localStorage.getItem("managerToken");
-
-      const response = await fetch(documentUrl, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
-
-      if (!response.ok) {
-        throw new Error("File not found or inaccessible");
-      }
-
-      const contentType = response.headers.get("content-type") || "";
-      if (contentType.includes("application/json") || contentType.includes("text/html")) {
-        throw new Error("Invalid file response");
-      }
-
-      const blob = await response.blob();
-      const objectUrl = window.URL.createObjectURL(blob);
       const link = window.document.createElement("a");
-      link.href = objectUrl;
+      link.href = documentUrl;
       link.download = file.name || "document";
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
       link.click();
-      window.URL.revokeObjectURL(objectUrl);
     } catch (error) {
       message.error("Unable to download this file. Please re-upload and try again.");
     }
