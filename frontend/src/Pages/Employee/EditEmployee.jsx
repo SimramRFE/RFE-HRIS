@@ -5,6 +5,9 @@ import {
   Input,
   Select,
   Button,
+  Card,
+  Popconfirm,
+  Tooltip,
   Typography,
   Upload,
   Row,
@@ -17,6 +20,10 @@ import {
 } from "antd";
 import {
   UploadOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  CheckOutlined,
+  CloseOutlined,
   UserOutlined,
   PhoneOutlined,
   BankOutlined,
@@ -44,6 +51,10 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("1");
   const [fileList, setFileList] = useState([]);
+  const [existingDocuments, setExistingDocuments] = useState([]);
+  const [editingDocumentIndex, setEditingDocumentIndex] = useState(null);
+  const [editingDocumentName, setEditingDocumentName] = useState("");
+  const [documentsUpdating, setDocumentsUpdating] = useState(false);
   const [visaCountryOptions, setVisaCountryOptions] = useState(DEFAULT_VISA_COUNTRIES);
   const [submitFromUpdateButton, setSubmitFromUpdateButton] = useState(false);
 
@@ -142,9 +153,81 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
 
       form.setFieldsValue(formData);
       setEmployeeStatus(employee.employeeStatus || "Tourist");
+      setExistingDocuments(Array.isArray(employee.documents) ? employee.documents : []);
+      setEditingDocumentIndex(null);
+      setEditingDocumentName("");
       setFileList([]); // Reset file list when opening modal
     }
   }, [employee, open, form]);
+
+  const startRenameDocument = (index, currentName) => {
+    setEditingDocumentIndex(index);
+    setEditingDocumentName(currentName || "");
+  };
+
+  const cancelRenameDocument = () => {
+    setEditingDocumentIndex(null);
+    setEditingDocumentName("");
+  };
+
+  const persistDocumentsToBackend = async (documents, successMessage) => {
+    if (!employee?._id && !employee?.id) {
+      message.error("Employee ID not found");
+      return false;
+    }
+
+    try {
+      setDocumentsUpdating(true);
+      const employeeId = employee._id || employee.id;
+      const response = await employeeAPI.update(employeeId, { documents });
+
+      if (response.data.success) {
+        setExistingDocuments(documents);
+        if (successMessage) {
+          message.success(successMessage);
+        }
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      message.error(error.response?.data?.message || "Failed to update documents");
+      return false;
+    } finally {
+      setDocumentsUpdating(false);
+    }
+  };
+
+  const saveRenameDocument = async (index) => {
+    const renamedDocument = editingDocumentName.trim();
+    if (!renamedDocument) {
+      message.warning("Document name cannot be empty");
+      return;
+    }
+
+    const updatedDocuments = existingDocuments.map((document, documentIndex) =>
+        documentIndex === index
+          ? {
+            ...document,
+            name: renamedDocument,
+          }
+          : document
+      );
+
+    const updated = await persistDocumentsToBackend(updatedDocuments, "Document renamed successfully");
+    if (updated) {
+      cancelRenameDocument();
+    }
+  };
+
+  const deleteDocument = async (index) => {
+    const updatedDocuments = existingDocuments.filter((_, documentIndex) => documentIndex !== index);
+    const updated = await persistDocumentsToBackend(updatedDocuments, "Document deleted successfully");
+
+    if (updated && editingDocumentIndex === index) {
+      cancelRenameDocument();
+    }
+  };
 
   const handleSubmit = async (values) => {
     try {
@@ -156,7 +239,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
       setLoading(true);
 
       // Handle file uploads first
-      let uploadedDocuments = (employee && employee.documents) || [];
+      let uploadedDocuments = [...existingDocuments];
 
       // Use fileList state instead of values.documents
       if (fileList && fileList.length > 0) {
@@ -378,9 +461,11 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
                   style={{ width: "100%" }}
                   tokenSeparators={[","]}
                   options={[
-                    { value: "RFE", label: "RFE" },
-                    { value: "Royal Tree", label: "Royal Tree" },
                     { value: "Royal Falcon", label: "Royal Falcon" },
+                    { value: "Royal Tree", label: "Royal Tree" },
+                    { value: "Royal Grid", label: "Royal Grid" },
+                    { value: "Royal Net", label: "Royal Net" },
+                    { value: "SoftEx", label: "SoftEx" },
                   ]}
                 >
                 </Select>
@@ -556,10 +641,6 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               </Form.Item>
             </Col>
           </Row>
-
-
-
-
         </>
       )
     },
@@ -711,17 +792,97 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
 
 
 
-          {employee && employee.documents && employee.documents.length > 0 && (
+          {existingDocuments.length > 0 && (
             <div style={{ marginBottom: 16 }}>
               <Typography.Text strong style={{ color: '#fff' }}>Existing Documents:</Typography.Text>
-              <div style={{ marginTop: 8 }}>
-                {employee.documents.map((doc, index) => (
-                  <div key={index} style={{ marginBottom: 8, padding: 8, background: '#f5f5f5', borderRadius: 4 }}>
-                    <Typography.Text>{doc.name}</Typography.Text>
-                    <div style={{ fontSize: 12, color: '#8c8c8c' }}>
-                      {(doc.size / 1024).toFixed(2)} KB - {formatDate(doc.uploadDate)}
-                    </div>
-                  </div>
+              <div
+                style={{
+                  marginTop: 8,
+                  display: "grid",
+                  gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                  gap: 10,
+                }}
+              >
+                {existingDocuments.map((doc, index) => (
+                  <Card
+                    key={`${doc.url || doc.name || "doc"}-${index}`}
+                    size="small"
+                    style={{ borderRadius: 8 }}
+                    styles={{ body: { padding: 10 } }}
+                  >
+                    <Space direction="vertical" style={{ width: "100%" }} size={4}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                        {editingDocumentIndex === index ? (
+                          <Space.Compact style={{ width: "100%" }}>
+                            <Input
+                              size="small"
+                              value={editingDocumentName}
+                              onChange={(event) => setEditingDocumentName(event.target.value)}
+                              onPressEnter={() => saveRenameDocument(index)}
+                              disabled={documentsUpdating}
+                            />
+                            <Tooltip title="Save">
+                              <Button
+                                type="text"
+                                size="small"
+                                icon={<CheckOutlined />}
+                                onClick={() => saveRenameDocument(index)}
+                                loading={documentsUpdating}
+                              />
+                            </Tooltip>
+                            <Tooltip title="Cancel">
+                              <Button
+                                type="text"
+                                size="small"
+                                icon={<CloseOutlined />}
+                                onClick={cancelRenameDocument}
+                                disabled={documentsUpdating}
+                              />
+                            </Tooltip>
+                          </Space.Compact>
+                        ) : (
+                          <Typography.Text ellipsis={{ tooltip: doc.name }} style={{ fontWeight: 500, flex: 1 }}>
+                            {doc.name}
+                          </Typography.Text>
+                        )}
+
+                        {editingDocumentIndex !== index && (
+                          <Space size={0}>
+                            <Tooltip title="Rename">
+                              <Button
+                                type="text"
+                                size="small"
+                                icon={<EditOutlined />}
+                                onClick={() => startRenameDocument(index, doc.name)}
+                                disabled={documentsUpdating}
+                              />
+                            </Tooltip>
+                            <Popconfirm
+                              title="Delete this document?"
+                              okText="Delete"
+                              cancelText="Cancel"
+                              onConfirm={() => deleteDocument(index)}
+                              disabled={documentsUpdating}
+                            >
+                              <Tooltip title="Delete">
+                                <Button
+                                  type="text"
+                                  size="small"
+                                  danger
+                                  icon={<DeleteOutlined />}
+                                  disabled={documentsUpdating}
+                                />
+                              </Tooltip>
+                            </Popconfirm>
+                          </Space>
+                        )}
+                      </div>
+
+                      <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                        {doc.size ? `${(doc.size / 1024).toFixed(2)} KB` : "N/A"} - {formatDate(doc.uploadDate)}
+                      </Typography.Text>
+                    </Space>
+                  </Card>
                 ))}
               </div>
             </div>
@@ -911,7 +1072,8 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
     }
   ];
 
-  return (
+  return (<>
+  
     <Modal
       open={open}
       onCancel={() => {
@@ -1020,7 +1182,16 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
         </Form.Item>
       </Form>
     </Modal>
+    <style>
+    {`
+    :where(.css-dev-only-do-not-override-mncuj7).ant-upload-wrapper .ant-upload-list .ant-upload-list-item .ant-upload-list-item-actions .anticon {
+    color: #fff;
+    }
+    `}
+  </style>
+  ,</>
   );
+  
 };
 
 export default EditEmployeeModal;

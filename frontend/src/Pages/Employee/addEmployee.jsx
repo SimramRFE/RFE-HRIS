@@ -364,9 +364,11 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
                 name="company"
               >
                 <Select placeholder="Select company">
-                  <Option value="RFE">RFE</Option>
-                  <Option value="Royal Tree">Royal Tree</Option>
                   <Option value="Royal Falcon">Royal Falcon</Option>
+                   <Option value="Royal Tree">Royal Tree</Option>
+                  <Option value="Royal Grid">Royal Grid</Option>
+                  <Option value="Royal Net">Royal Net</Option>
+                  <Option value="SoftEx">SoftEx</Option>
                 </Select>
               </Form.Item>
             </Col>

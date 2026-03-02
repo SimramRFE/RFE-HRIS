@@ -10,8 +10,6 @@ import {
   Tag, 
   Avatar, 
   Space,
-  Row,
-  Col,
   Spin,
   Drawer,
   Card
@@ -508,9 +506,15 @@ const ViewEmployee = ({ id, open, onClose }) => {
                 <Text strong style={{ fontSize: 15 }}>Uploaded Documents</Text>
                 <Tag color="blue">{employee.documents.length} file(s)</Tag>
               </Space> */}
-              <Row gutter={[12, 12]}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+                  gap: 12,
+                }}
+              >
                 {employee.documents.map((doc, index) => (
-                  <Col xs={24} sm={12} md={8} key={index}>
+                  <div key={index}>
                     <Card
                       size="small"
                       hoverable
@@ -555,9 +559,9 @@ const ViewEmployee = ({ id, open, onClose }) => {
                         </Button>
                       </Space>
                     </Card>
-                  </Col>
+                  </div>
                 ))}
-              </Row>
+              </div>
             </div>
           )}
 

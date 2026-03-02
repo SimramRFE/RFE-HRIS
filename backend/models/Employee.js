@@ -52,10 +52,10 @@ const employeeSchema = new mongoose.Schema({
   },
   company: {
     type: String,
-    enum: ['RFE', 'Royal Tree', 'Royal Falcon']
+    enum: ['Royal Falcon', 'Royal Tree', 'Royal Grid', 'Royal Net', 'SoftEx']
   },
   employeeStatus: {
-    type: String,
+    type: String,      
     enum: ['Tourist', 'Resident']
   },
   role: {

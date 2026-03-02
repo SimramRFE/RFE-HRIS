@@ -30,6 +30,7 @@ import { formatDate } from "../../services/dateUtils";
 import { formatPhoneNumber, splitPhoneNumber } from "../../services/phoneUtils";
 
 const { Title, Text } = Typography;
+const DEFAULT_COMPANY_OPTIONS = ["Royal Falcon", "Royal Tree", "Royal Grid", "Royal Net", "SoftEx"];
 
 const Employee = () => {
   const navigate = useNavigate();
@@ -45,6 +46,9 @@ const Employee = () => {
   const [customizeDrawerVisible, setCustomizeDrawerVisible] = useState(false);
   const [viewDrawerVisible, setViewDrawerVisible] = useState(false);
   const [viewEmployeeId, setViewEmployeeId] = useState(null);
+  const [paginationCurrent, setPaginationCurrent] = useState(1);
+  const [paginationPageSize, setPaginationPageSize] = useState(20);
+  const [selectedCompanyFilters, setSelectedCompanyFilters] = useState([]);
 
   // Available columns configuration
   const [availableColumns] = useState([
@@ -106,13 +110,33 @@ const Employee = () => {
     filterEmployees();
   }, [employees, searchText]);
 
+  const sortEmployeesByCodeDesc = (employeeList) => {
+    return [...employeeList].sort((firstEmployee, secondEmployee) => {
+      const firstCode = (firstEmployee.employeeCode || "").toString().trim();
+      const secondCode = (secondEmployee.employeeCode || "").toString().trim();
+
+      const firstNumericPart = parseInt(firstCode.replace(/\D/g, ""), 10);
+      const secondNumericPart = parseInt(secondCode.replace(/\D/g, ""), 10);
+
+      const firstHasNumber = !Number.isNaN(firstNumericPart);
+      const secondHasNumber = !Number.isNaN(secondNumericPart);
+
+      if (firstHasNumber && secondHasNumber) {
+        return secondNumericPart - firstNumericPart;
+      }
+
+      return secondCode.localeCompare(firstCode);
+    });
+  };
+
   const loadEmployees = async () => {
     try {
       setLoading(true);
       const response = await employeeAPI.getAll();
       if (response.data.success) {
-        setEmployees(response.data.data);
-        setFilteredEmployees(response.data.data);
+        const sortedEmployees = sortEmployeesByCodeDesc(response.data.data || []);
+        setEmployees(sortedEmployees);
+        setFilteredEmployees(sortedEmployees);
       }
     } catch (error) {
       message.error(error.response?.data?.message || "Failed to load employees");
@@ -134,7 +158,8 @@ const Employee = () => {
 
   const filterEmployees = () => {
     if (!searchText) {
-      setFilteredEmployees(employees);
+      setFilteredEmployees(sortEmployeesByCodeDesc(employees));
+      setPaginationCurrent(1);
       return;
     }
 
@@ -151,7 +176,19 @@ const Employee = () => {
       );
     });
 
-    setFilteredEmployees(filtered);
+    setFilteredEmployees(sortEmployeesByCodeDesc(filtered));
+    setPaginationCurrent(1);
+  };
+
+  const handleTableChange = (pagination, filters) => {
+    setPaginationCurrent(pagination.current || 1);
+    setPaginationPageSize(pagination.pageSize || 20);
+
+    const companyValues = Array.isArray(filters?.company)
+      ? filters.company.map((value) => value?.toString()).filter(Boolean)
+      : [];
+
+    setSelectedCompanyFilters(companyValues);
   };
 
   const handleDelete = async (id) => {
@@ -183,11 +220,49 @@ const Employee = () => {
     });
   };
 
+  const companyFilterMap = DEFAULT_COMPANY_OPTIONS.reduce((companyMap, companyName) => {
+    const cleanCompanyName = (companyName || "").toString().trim();
+    if (cleanCompanyName) {
+      companyMap.set(cleanCompanyName.toLowerCase(), cleanCompanyName);
+    }
+    return companyMap;
+  }, new Map());
+
+  employees.forEach((employee) => {
+    const rawCompany = (employee.company || "").toString().trim();
+    const companyLabel = rawCompany || "N/A";
+    const companyKey = companyLabel.toLowerCase();
+
+    if (!companyFilterMap.has(companyKey)) {
+      companyFilterMap.set(companyKey, companyLabel);
+    }
+  });
+
+  const companyFilters = Array.from(companyFilterMap.values())
+    .sort((firstCompany, secondCompany) => {
+      const isFirstNA = firstCompany.toLowerCase() === "n/a";
+      const isSecondNA = secondCompany.toLowerCase() === "n/a";
+
+      if (isFirstNA && !isSecondNA) {
+        return 1;
+      }
+
+      if (!isFirstNA && isSecondNA) {
+        return -1;
+      }
+
+      return firstCompany.localeCompare(secondCompany, undefined, { sensitivity: "base" });
+    })
+    .map((company) => ({
+      text: company,
+      value: company,
+    }));
+
   const allColumnsDefinition = [
     {
       title: "Sr. No.",
       key: "srNo",
-      render: (_, __, index) => index + 1 + "." // Display 1-based index
+      render: (_, __, index) => ((paginationCurrent - 1) * paginationPageSize + index + 1) + "."
     },
     {
       title: "Employee Name",
@@ -251,9 +326,17 @@ const Employee = () => {
       title: "Company",
       dataIndex: "company",
       key: "company",
+      filters: companyFilters,
+      filteredValue: selectedCompanyFilters,
+      filterSearch: true,
+      filterMultiple: true,
+      onFilter: (value, record) => {
+        const companyLabel = (record.company || "").toString().trim() || "N/A";
+        return companyLabel.toLowerCase() === value.toString().toLowerCase();
+      },
       render: (company) => (
         <div color="purple" style={{ borderRadius: 4 }}>
-          {company}
+          {company || "N/A"}
         </div>
       ),
     },
@@ -370,6 +453,14 @@ const Employee = () => {
 
   // Filter columns based on visibility
   const columns = allColumnsDefinition.filter(col => visibleColumns.includes(col.key));
+  const employeesToDisplay = selectedCompanyFilters.length
+    ? filteredEmployees.filter((employee) => {
+      const companyLabel = (employee.company || "").toString().trim() || "N/A";
+      return selectedCompanyFilters.some(
+        (selectedCompany) => selectedCompany.toLowerCase() === companyLabel.toLowerCase()
+      );
+    })
+    : filteredEmployees;
 
   return (
     <div style={{ padding: "10px", minHeight: "100vh", background: "#f6f2f2", backgroundSize: "cover", backgroundPosition: "center" }}>
@@ -377,7 +468,7 @@ const Employee = () => {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
           <div>
             <Title level={2} style={{ margin: 0, color: "#1a1a2e", fontSize: 20 }}>
-              Employees<span className="text-green-600"> ({filteredEmployees.length})</span>
+              Employees<span className="text-green-600"> ({employeesToDisplay.length})</span>
             </Title>
           </div>
           <Space.Compact size="large" style={{ maxWidth: 450, width: "100%" }}>
@@ -415,13 +506,18 @@ const Employee = () => {
       <Card>
         <Spin spinning={loading}>
           <Table
-            dataSource={filteredEmployees}
+            dataSource={employeesToDisplay}
             columns={columns}
             rowKey={(record) => record._id || record.id}
+            onChange={handleTableChange}
             pagination={{
-              pageSize: 10,
+              current: paginationCurrent,
+              pageSize: paginationPageSize,
+              defaultPageSize: 20,
+              pageSizeOptions: ["20", "50", "100"],
               showSizeChanger: true,
-
+              showLessItems: true,
+              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
             }}
             tableLayout="auto"
             scroll={{ x: "max-content" }}
@@ -518,7 +614,14 @@ const Employee = () => {
       .ant-card .ant-card-body {
     padding: 5px 10px;
 }
-      `}
+   
+      :where(.css-dev-only-do-not-override-mncuj7).ant-table-wrapper .ant-table-filter-trigger {
+        color: #fff;
+        }
+        :where(.css-dev-only-do-not-override-mncuj7).ant-table-wrapper .ant-table-filter-trigger:hover {
+          color: #fff;
+        }
+        `}
       </style>
     </div>
 
