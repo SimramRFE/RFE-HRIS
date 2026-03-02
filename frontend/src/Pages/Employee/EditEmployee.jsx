@@ -1184,8 +1184,8 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
     </Modal>
     <style>
     {`
-    :where(.css-dev-only-do-not-override-mncuj7).ant-upload-wrapper .ant-upload-list .ant-upload-list-item .ant-upload-list-item-actions .anticon {
-    color: #fff;
+    .ant-upload-wrapper .ant-upload-list .ant-upload-list-item .ant-upload-list-item-actions .anticon {
+      color: #fff !important;
     }
     `}
   </style>
