@@ -463,7 +463,10 @@ const Employee = () => {
     : filteredEmployees;
 
   return (
-    <div style={{ padding: "10px", minHeight: "100vh", background: "#f6f2f2", backgroundSize: "cover", backgroundPosition: "center" }}>
+    <div
+      className="employee-page"
+      style={{ padding: "10px", minHeight: "100vh", background: "#f6f2f2", backgroundSize: "cover", backgroundPosition: "center" }}
+    >
       <Card style={{ marginBottom: 10 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
           <div>
@@ -611,16 +614,17 @@ const Employee = () => {
       )}
       <style>
         {`
-      .ant-card .ant-card-body {
-    padding: 5px 10px;
-}
-   
-      :where(.css-dev-only-do-not-override-mncuj7).ant-table-wrapper .ant-table-filter-trigger {
+      .employee-page .ant-card .ant-card-body {
+        padding: 5px 10px;
+      }
+
+      .employee-page .ant-table-wrapper .ant-table-filter-trigger {
         color: #fff;
-        }
-        :where(.css-dev-only-do-not-override-mncuj7).ant-table-wrapper .ant-table-filter-trigger:hover {
-          color: #fff;
-        }
+      }
+
+      .employee-page .ant-table-wrapper .ant-table-filter-trigger:hover {
+        color: #fff;
+      }
         `}
       </style>
     </div>
