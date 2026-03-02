@@ -328,7 +328,7 @@ const Employee = () => {
       key: "company",
       filters: companyFilters,
       filteredValue: selectedCompanyFilters,
-      filterSearch: true,
+      filterSearch: false,
       filterMultiple: true,
       onFilter: (value, record) => {
         const companyLabel = (record.company || "").toString().trim() || "N/A";
