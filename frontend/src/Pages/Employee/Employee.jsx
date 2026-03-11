@@ -49,6 +49,10 @@ const Employee = () => {
   const [paginationCurrent, setPaginationCurrent] = useState(1);
   const [paginationPageSize, setPaginationPageSize] = useState(20);
   const [selectedCompanyFilters, setSelectedCompanyFilters] = useState([]);
+  const [selectedDepartmentFilters, setSelectedDepartmentFilters] = useState([]);
+  const [selectedRoleFilters, setSelectedRoleFilters] = useState([]);
+  const [selectedWorkLocationFilters, setSelectedWorkLocationFilters] = useState([]);
+  const [selectedNationalityFilters, setSelectedNationalityFilters] = useState([]);
 
   // Available columns configuration
   const [availableColumns] = useState([
@@ -187,8 +191,24 @@ const Employee = () => {
     const companyValues = Array.isArray(filters?.company)
       ? filters.company.map((value) => value?.toString()).filter(Boolean)
       : [];
+    const departmentValues = Array.isArray(filters?.department)
+      ? filters.department.map((value) => value?.toString()).filter(Boolean)
+      : [];
+    const roleValues = Array.isArray(filters?.role)
+      ? filters.role.map((value) => value?.toString()).filter(Boolean)
+      : [];
+    const workLocationValues = Array.isArray(filters?.workLocation)
+      ? filters.workLocation.map((value) => value?.toString()).filter(Boolean)
+      : [];
+    const nationalityValues = Array.isArray(filters?.nationality)
+      ? filters.nationality.map((value) => value?.toString()).filter(Boolean)
+      : [];
 
     setSelectedCompanyFilters(companyValues);
+    setSelectedDepartmentFilters(departmentValues);
+    setSelectedRoleFilters(roleValues);
+    setSelectedWorkLocationFilters(workLocationValues);
+    setSelectedNationalityFilters(nationalityValues);
   };
 
   const handleDelete = async (id) => {
@@ -258,6 +278,45 @@ const Employee = () => {
       value: company,
     }));
 
+  const buildColumnFilters = (employeesList, fieldName) => {
+    const valueMap = new Map();
+
+    employeesList.forEach((employee) => {
+      const rawValue = (employee[fieldName] || "").toString().trim();
+      const label = rawValue || "N/A";
+      const key = label.toLowerCase();
+
+      if (!valueMap.has(key)) {
+        valueMap.set(key, label);
+      }
+    });
+
+    return Array.from(valueMap.values())
+      .sort((firstValue, secondValue) => {
+        const isFirstNA = firstValue.toLowerCase() === "n/a";
+        const isSecondNA = secondValue.toLowerCase() === "n/a";
+
+        if (isFirstNA && !isSecondNA) {
+          return 1;
+        }
+
+        if (!isFirstNA && isSecondNA) {
+          return -1;
+        }
+
+        return firstValue.localeCompare(secondValue, undefined, { sensitivity: "base" });
+      })
+      .map((value) => ({
+        text: value,
+        value,
+      }));
+  };
+
+  const departmentFilters = buildColumnFilters(employees, "department");
+  const roleFilters = buildColumnFilters(employees, "role");
+  const workLocationFilters = buildColumnFilters(employees, "workLocation");
+  const nationalityFilters = buildColumnFilters(employees, "nationality");
+
   const allColumnsDefinition = [
     {
       title: "Sr. No.",
@@ -311,9 +370,17 @@ const Employee = () => {
       title: "Department",
       dataIndex: "department",
       key: "department",
+      filters: departmentFilters,
+      filteredValue: selectedDepartmentFilters,
+      filterSearch: false,
+      filterMultiple: true,
+      onFilter: (value, record) => {
+        const label = (record.department || "").toString().trim() || "N/A";
+        return label.toLowerCase() === value.toString().toLowerCase();
+      },
       render: (dept) => (
         <div color="blue" style={{ borderRadius: 4 }}>
-          {dept}
+          {dept || "N/A"}
         </div>
       ),
     },
@@ -321,6 +388,15 @@ const Employee = () => {
       title: "Role",
       dataIndex: "role",
       key: "role",
+      filters: roleFilters,
+      filteredValue: selectedRoleFilters,
+      filterSearch: false,
+      filterMultiple: true,
+      onFilter: (value, record) => {
+        const label = (record.role || "").toString().trim() || "N/A";
+        return label.toLowerCase() === value.toString().toLowerCase();
+      },
+      render: (role) => role || "N/A",
     },
     {
       title: "Company",
@@ -344,12 +420,28 @@ const Employee = () => {
       title: "Work Location",
       dataIndex: "workLocation",
       key: "workLocation",
+      filters: workLocationFilters,
+      filteredValue: selectedWorkLocationFilters,
+      filterSearch: false,
+      filterMultiple: true,
+      onFilter: (value, record) => {
+        const label = (record.workLocation || "").toString().trim() || "N/A";
+        return label.toLowerCase() === value.toString().toLowerCase();
+      },
       render: (workLocation) => workLocation || "N/A",
     },
     {
       title: "Nationality",
       dataIndex: "nationality",
       key: "nationality",
+      filters: nationalityFilters,
+      filteredValue: selectedNationalityFilters,
+      filterSearch: false,
+      filterMultiple: true,
+      onFilter: (value, record) => {
+        const label = (record.nationality || "").toString().trim() || "N/A";
+        return label.toLowerCase() === value.toString().toLowerCase();
+      },
       render: (nationality) => nationality || "N/A",
     },
     {
@@ -453,14 +545,51 @@ const Employee = () => {
 
   // Filter columns based on visibility
   const columns = allColumnsDefinition.filter(col => visibleColumns.includes(col.key));
-  const employeesToDisplay = selectedCompanyFilters.length
-    ? filteredEmployees.filter((employee) => {
-      const companyLabel = (employee.company || "").toString().trim() || "N/A";
-      return selectedCompanyFilters.some(
+  const employeesToDisplay = filteredEmployees.filter((employee) => {
+    const companyLabel = (employee.company || "").toString().trim() || "N/A";
+    const departmentLabel = (employee.department || "").toString().trim() || "N/A";
+    const roleLabel = (employee.role || "").toString().trim() || "N/A";
+    const workLocationLabel = (employee.workLocation || "").toString().trim() || "N/A";
+    const nationalityLabel = (employee.nationality || "").toString().trim() || "N/A";
+
+    const matchesCompany =
+      selectedCompanyFilters.length === 0 ||
+      selectedCompanyFilters.some(
         (selectedCompany) => selectedCompany.toLowerCase() === companyLabel.toLowerCase()
       );
-    })
-    : filteredEmployees;
+
+    const matchesDepartment =
+      selectedDepartmentFilters.length === 0 ||
+      selectedDepartmentFilters.some(
+        (selectedDepartment) => selectedDepartment.toLowerCase() === departmentLabel.toLowerCase()
+      );
+
+    const matchesRole =
+      selectedRoleFilters.length === 0 ||
+      selectedRoleFilters.some(
+        (selectedRole) => selectedRole.toLowerCase() === roleLabel.toLowerCase()
+      );
+
+    const matchesWorkLocation =
+      selectedWorkLocationFilters.length === 0 ||
+      selectedWorkLocationFilters.some(
+        (selectedWorkLocation) => selectedWorkLocation.toLowerCase() === workLocationLabel.toLowerCase()
+      );
+
+    const matchesNationality =
+      selectedNationalityFilters.length === 0 ||
+      selectedNationalityFilters.some(
+        (selectedNationality) => selectedNationality.toLowerCase() === nationalityLabel.toLowerCase()
+      );
+
+    return (
+      matchesCompany &&
+      matchesDepartment &&
+      matchesRole &&
+      matchesWorkLocation &&
+      matchesNationality
+    );
+  });
 
   return (
     <div
