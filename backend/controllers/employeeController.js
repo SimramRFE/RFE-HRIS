@@ -41,7 +41,7 @@ const sanitizeEmployeePayload = (payload = {}) => {
       }
     }
 
-    if (Array.isArray(sanitized[field]) && sanitized[field].length === 0) {
+    if (field !== 'documents' && Array.isArray(sanitized[field]) && sanitized[field].length === 0) {
       sanitized[field] = undefined;
     }
   });

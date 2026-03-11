@@ -221,7 +221,26 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
   };
 
   const deleteDocument = async (index) => {
+    const documentToDelete = existingDocuments[index];
     const updatedDocuments = existingDocuments.filter((_, documentIndex) => documentIndex !== index);
+
+    if (documentToDelete?.url) {
+      const filename = String(documentToDelete.url).split('/').pop();
+
+      if (filename) {
+        try {
+          await uploadAPI.deleteDocument(decodeURIComponent(filename));
+        } catch (error) {
+          const statusCode = error?.response?.status;
+
+          if (statusCode !== 404) {
+            message.error(error.response?.data?.message || 'Failed to delete document file');
+            return;
+          }
+        }
+      }
+    }
+
     const updated = await persistDocumentsToBackend(updatedDocuments, "Document deleted successfully");
 
     if (updated && editingDocumentIndex === index) {
