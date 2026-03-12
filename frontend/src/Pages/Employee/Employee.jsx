@@ -472,7 +472,7 @@ const Employee = () => {
       title: "Salary",
       dataIndex: "salary",
       key: "salary",
-      render: (salary) => salary ? `$${salary.toLocaleString()}` : "N/A",
+      render: (salary) => salary ? `${salary.toLocaleString()}` : "N/A",
     },
     {
       title: "Gender",
