@@ -31,6 +31,24 @@ import { formatPhoneNumber, splitPhoneNumber } from "../../services/phoneUtils";
 
 const { Title, Text } = Typography;
 const DEFAULT_COMPANY_OPTIONS = ["Royal Falcon", "Royal Tree", "Royal Grid", "Royal Net", "SoftEx"];
+const EMPLOYEE_VISIBLE_COLUMNS_STORAGE_KEY = "employeeVisibleColumns";
+const DEFAULT_VISIBLE_COLUMNS = [
+  'srNo',
+  'employee',
+  'employeeCode',
+  'contact',
+  'email',
+  'department',
+  'role',
+  'company',
+  'workLocation',
+  'nationality',
+  'passportNumber',
+  'passportExpiryDate',
+  'visaExpiryDate',
+  'customize',
+  'actions'
+];
 
 const Employee = () => {
   const navigate = useNavigate();
@@ -81,23 +99,21 @@ const Employee = () => {
   ]);
 
   // Visible columns state - default visible columns
-  const [visibleColumns, setVisibleColumns] = useState([
-    'srNo',
-    'employee',
-    'employeeCode',
-    'contact',
-    'email',
-    'department',
-    'role',
-    'company',
-    'workLocation',
-    'nationality',
-    'passportNumber',
-    'passportExpiryDate',
-    'visaExpiryDate',
-    'customize',
-    'actions'
-  ]);
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    try {
+      const storedVisibleColumns = localStorage.getItem(EMPLOYEE_VISIBLE_COLUMNS_STORAGE_KEY);
+      if (storedVisibleColumns) {
+        const parsedColumns = JSON.parse(storedVisibleColumns);
+        if (Array.isArray(parsedColumns) && parsedColumns.length > 0) {
+          return parsedColumns;
+        }
+      }
+    } catch (error) {
+      console.warn("Failed to parse employee visible columns from storage", error);
+    }
+
+    return DEFAULT_VISIBLE_COLUMNS;
+  });
 
   useEffect(() => {
     loadEmployees();
@@ -113,6 +129,14 @@ const Employee = () => {
   useEffect(() => {
     filterEmployees();
   }, [employees, searchText]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(EMPLOYEE_VISIBLE_COLUMNS_STORAGE_KEY, JSON.stringify(visibleColumns));
+    } catch (error) {
+      console.warn("Failed to save employee visible columns to storage", error);
+    }
+  }, [visibleColumns]);
 
   const sortEmployeesByCodeDesc = (employeeList) => {
     return [...employeeList].sort((firstEmployee, secondEmployee) => {
