@@ -6,14 +6,14 @@ const updateUserRole = async () => {
   try {
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('Connected to MongoDB');
+    // console.log('Connected to MongoDB');
 
     // Get username from command line argument
     const username = process.argv[2];
     
     if (!username) {
-      console.error('Please provide a username as argument');
-      console.log('Usage: node updateUserRole.js <username>');
+      // console.error('Please provide a username as argument');
+      // console.log('Usage: node updateUserRole.js <username>');
       process.exit(1);
     }
 
@@ -29,12 +29,12 @@ const updateUserRole = async () => {
     user.role = 'admin';
     await user.save();
 
-    console.log(`✅ Successfully updated user '${username}' role to 'admin'`);
-    console.log('User details:');
-    console.log('- Name:', user.name);
-    console.log('- Email:', user.email);
-    console.log('- Username:', user.username);
-    console.log('- Role:', user.role);
+    // console.log(`✅ Successfully updated user '${username}' role to 'admin'`);
+    // console.log('User details:');
+    // console.log('- Name:', user.name);
+    // console.log('- Email:', user.email);
+    // console.log('- Username:', user.username);
+    // console.log('- Role:', user.role);
 
     process.exit(0);
   } catch (error) {

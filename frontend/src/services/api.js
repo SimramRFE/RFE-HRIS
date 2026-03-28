@@ -82,6 +82,11 @@ const managerApi = axios.create({
 // Request interceptor to add token
 api.interceptors.request.use(
   (config) => {
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+      // Let the browser set multipart boundary automatically for FormData requests.
+      delete config.headers['Content-Type'];
+    }
+
     const token =
       sessionStorage.getItem('token') ||
       sessionStorage.getItem('managerToken') ||
@@ -99,6 +104,10 @@ api.interceptors.request.use(
 
 managerApi.interceptors.request.use(
   (config) => {
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+
     const token =
       sessionStorage.getItem('managerToken') ||
       sessionStorage.getItem('token') ||
@@ -222,11 +231,7 @@ export const employeeAPI = {
 // Upload API
 export const uploadAPI = {
   uploadDocuments: (formData) => {
-    return api.post('/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    return api.post('/upload', formData);
   },
   getDocument: (filename) => getDocumentByFilename(filename),
   resolveDocumentUrl,

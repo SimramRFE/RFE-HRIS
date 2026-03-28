@@ -135,10 +135,10 @@ exports.createEmployee = async (req, res) => {
     // Add created by user
     req.body.createdBy = req.user.id;
 
-    console.log('Creating employee with data:', JSON.stringify(req.body, null, 2));
-    console.log('Documents type:', typeof req.body.documents);
-    console.log('Documents is array:', Array.isArray(req.body.documents));
-    console.log('Documents value:', req.body.documents);
+    // console.log('Creating employee with data:', JSON.stringify(req.body, null, 2));
+    // console.log('Documents type:', typeof req.body.documents);
+    // console.log('Documents is array:', Array.isArray(req.body.documents));
+    // console.log('Documents value:', req.body.documents);
 
     await ensureVisaCountryExists(req.body.countryOfVisaIssuance, req.user.id);
 

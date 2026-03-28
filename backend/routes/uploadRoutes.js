@@ -6,7 +6,32 @@ const path = require('path');
 const fs = require('fs');
 
 // Upload documents for employee
-router.post('/', protect, upload.array('documents', 10), async (req, res) => {
+router.post('/', protect, (req, res, next) => {
+  upload.array('documents', 100)(req, res, (err) => {
+    if (!err) {
+      return next();
+    }
+
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({
+        success: false,
+        message: 'Each file must be 150MB or smaller'
+      });
+    }
+
+    if (err.code === 'LIMIT_FILE_COUNT') {
+      return res.status(400).json({
+        success: false,
+        message: 'You can upload up to 100 files at once'
+      });
+    }
+
+    return res.status(400).json({
+      success: false,
+      message: err.message || 'Upload failed'
+    });
+  });
+}, async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({

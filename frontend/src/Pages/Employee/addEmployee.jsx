@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Modal,
   Form,
@@ -44,10 +44,10 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
   const [activeTab, setActiveTab] = useState("1");
   const [fileList, setFileList] = useState([]);
   const [visaCountryOptions, setVisaCountryOptions] = useState(DEFAULT_VISA_COUNTRIES);
-  const [submitFromAddButton, setSubmitFromAddButton] = useState(false);
+  const submitIntentRef = useRef(false);
 
   const goToPreviousTab = () => {
-    setSubmitFromAddButton(false);
+    submitIntentRef.current = false;
     setActiveTab((previousTab) => {
       const currentIndex = tabOrder.indexOf(previousTab);
       if (currentIndex <= 0) {
@@ -58,7 +58,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
   };
 
   const goToNextTab = () => {
-    setSubmitFromAddButton(false);
+    submitIntentRef.current = false;
     setActiveTab((previousTab) => {
       const currentIndex = tabOrder.indexOf(previousTab);
       if (currentIndex === -1 || currentIndex >= tabOrder.length - 1) {
@@ -96,11 +96,11 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
 
   const handleSubmit = async (values) => {
     try {
-      if (!submitFromAddButton) {
+      if (!submitIntentRef.current) {
         return;
       }
 
-      setSubmitFromAddButton(false);
+      submitIntentRef.current = false;
 
       const hasAnyFormValue = Object.values(values).some((value) => {
         if (dayjs.isDayjs(value)) {
@@ -129,33 +129,41 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
 
       setLoading(true);
       let uploadedDocuments = [];
-      console.log('Documents from form:', values.documents);
-      console.log('FileList state:', fileList);
+      // console.log('Documents from form:', values.documents);
+      // console.log('FileList state:', fileList);
 
       if (fileList && fileList.length > 0) {
-        console.log('Files to upload:', fileList.length);
+        // console.log('Files to upload:', fileList.length);
         const formData = new FormData();
         fileList.forEach(file => {
-          console.log('File:', file);
+          // console.log('File:', file);
           if (file.originFileObj) {
-            formData.append('documents', file.originFileObj);
+            formData.append('documents', file.originFileObj, file.name || file.originFileObj.name);
           }
         });
 
+        const filesToUpload = formData.getAll('documents');
+        if (filesToUpload.length === 0) {
+          message.warning('Please reselect documents before adding employee');
+          return;
+        }
+
         try {
-          console.log('Uploading documents...');
+          // console.log('Uploading documents...');
           const uploadResponse = await uploadAPI.uploadDocuments(formData);
-          console.log('Upload response:', uploadResponse.data);
+          // console.log('Upload response:', uploadResponse.data);
           if (uploadResponse.data.success) {
             uploadedDocuments = uploadResponse.data.data;
             message.success(`${uploadedDocuments.length} document(s) uploaded successfully`);
           }
         } catch (uploadError) {
-          message.error('Failed to upload documents');
+          const errorMessage = uploadError?.response?.data?.message || 'Failed to upload documents';
+          message.error(errorMessage);
           console.error('Upload error:', uploadError);
+          return;
         }
       } else {
-        console.log('No documents to upload');
+        // console.log('No documents to upload');
       }
 
       // Convert date objects to strings
@@ -701,7 +709,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
               onChange={({ fileList: newFileList }) => setFileList(newFileList)}
               beforeUpload={() => false}
               multiple
-              maxCount={10}
+              maxCount={100}
               listType="picture"
             >
               <Button icon={<UploadOutlined />}>
@@ -944,8 +952,15 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
       <Form
         layout="vertical"
         form={form}
+        onSubmitCapture={(event) => {
+          if (activeTab !== "4") {
+            event.preventDefault();
+          }
+        }}
         onFinish={handleSubmit}
-        onFinishFailed={() => setSubmitFromAddButton(false)}
+        onFinishFailed={() => {
+          submitIntentRef.current = false;
+        }}
         scrollToFirstError
       >
         <Tabs
@@ -976,7 +991,7 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
                 htmlType="button"
                 size="large"
                 onClick={() => {
-                  setSubmitFromAddButton(false);
+                  submitIntentRef.current = false;
                   form.resetFields();
                   setEmployeeStatus("Tourist");
                   setActiveTab("1");
@@ -991,7 +1006,11 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
                   type="primary"
                   htmlType="button"
                   size="large"
-                  onClick={goToNextTab}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    goToNextTab();
+                  }}
                   style={{
                     background: "#52c41a",
                     borderColor: "#52c41a"
@@ -1002,12 +1021,11 @@ const AddEmployeeModal = ({ open, onCancel, onSuccess }) => {
               ) : (
                 <Button
                   type="primary"
-                  htmlType="button"
+                  htmlType="submit"
                   size="large"
                   loading={loading}
                   onClick={() => {
-                    setSubmitFromAddButton(true);
-                    form.submit();
+                    submitIntentRef.current = true;
                   }}
                   style={{
                     background: "#52c41a",

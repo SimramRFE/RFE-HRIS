@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Modal,
   Form,
@@ -56,10 +56,10 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
   const [editingDocumentName, setEditingDocumentName] = useState("");
   const [documentsUpdating, setDocumentsUpdating] = useState(false);
   const [visaCountryOptions, setVisaCountryOptions] = useState(DEFAULT_VISA_COUNTRIES);
-  const [submitFromUpdateButton, setSubmitFromUpdateButton] = useState(false);
+  const submitIntentRef = useRef(false);
 
   const goToPreviousTab = () => {
-    setSubmitFromUpdateButton(false);
+    submitIntentRef.current = false;
     setActiveTab((previousTab) => {
       const currentIndex = tabOrder.indexOf(previousTab);
       if (currentIndex <= 0) {
@@ -70,7 +70,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
   };
 
   const goToNextTab = () => {
-    setSubmitFromUpdateButton(false);
+    submitIntentRef.current = false;
     setActiveTab((previousTab) => {
       const currentIndex = tabOrder.indexOf(previousTab);
       if (currentIndex === -1 || currentIndex >= tabOrder.length - 1) {
@@ -250,11 +250,12 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
 
   const handleSubmit = async (values) => {
     try {
-      if (!submitFromUpdateButton) {
+      if (!submitIntentRef.current) {
         return;
       }
 
-      setSubmitFromUpdateButton(false);
+      submitIntentRef.current = false;
+
       setLoading(true);
 
       // Handle file uploads first
@@ -262,23 +263,29 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
 
       // Use fileList state instead of values.documents
       if (fileList && fileList.length > 0) {
-        const newFiles = fileList.filter(file => file.originFileObj);
-
-        if (newFiles.length > 0) {
-          const formData = new FormData();
-          newFiles.forEach(file => {
-            formData.append('documents', file.originFileObj);
-          });
-
-          try {
-            const uploadResponse = await uploadAPI.uploadDocuments(formData);
-            if (uploadResponse.data.success) {
-              uploadedDocuments = [...uploadedDocuments, ...uploadResponse.data.data];
-            }
-          } catch (uploadError) {
-            message.error('Failed to upload documents');
-            console.error('Upload error:', uploadError);
+        const formData = new FormData();
+        fileList.forEach((file) => {
+          if (file?.originFileObj) {
+            formData.append('documents', file.originFileObj, file.name || file.originFileObj.name);
           }
+        });
+
+        const filesToUpload = formData.getAll('documents');
+        if (filesToUpload.length === 0) {
+          message.warning('Please reselect documents before updating');
+          return;
+        }
+
+        try {
+          const uploadResponse = await uploadAPI.uploadDocuments(formData);
+          if (uploadResponse.data.success) {
+            uploadedDocuments = [...uploadedDocuments, ...uploadResponse.data.data];
+          }
+        } catch (uploadError) {
+          const errorMessage = uploadError?.response?.data?.message || 'Failed to upload documents';
+          message.error(errorMessage);
+          console.error('Upload error:', uploadError);
+          return;
         }
       }
 
@@ -915,7 +922,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               onChange={({ fileList: newFileList }) => setFileList(newFileList)}
               beforeUpload={() => false}
               multiple
-              maxCount={10}
+              maxCount={100}
               listType="picture"
             >
               <Button icon={<UploadOutlined />}>
@@ -1125,8 +1132,15 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
       <Form
         layout="vertical"
         form={form}
+        onSubmitCapture={(event) => {
+          if (activeTab !== "4") {
+            event.preventDefault();
+          }
+        }}
         onFinish={handleSubmit}
-        onFinishFailed={() => setSubmitFromUpdateButton(false)}
+        onFinishFailed={() => {
+          submitIntentRef.current = false;
+        }}
         scrollToFirstError
       >
         <Tabs
@@ -1155,7 +1169,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
                 htmlType="button"
                 size="large"
                 onClick={() => {
-                  setSubmitFromUpdateButton(false);
+                  submitIntentRef.current = false;
                   form.resetFields();
                   setEmployeeStatus("Tourist");
                   setActiveTab("1");
@@ -1170,7 +1184,11 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
                   type="primary"
                   htmlType="button"
                   size="large"
-                  onClick={goToNextTab}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    goToNextTab();
+                  }}
                   style={{
                     background: "#52c41a",
                     borderColor: "#52c41a"
@@ -1181,12 +1199,11 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
               ) : (
                 <Button
                   type="primary"
-                  htmlType="button"
+                  htmlType="submit"
                   size="large"
                   loading={loading}
                   onClick={() => {
-                    setSubmitFromUpdateButton(true);
-                    form.submit();
+                    submitIntentRef.current = true;
                   }}
                   style={{
                     background: "#52c41a",
