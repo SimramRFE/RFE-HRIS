@@ -43,6 +43,8 @@ const { Option } = Select;
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 const DEFAULT_VISA_COUNTRIES = ["UAE", "India", "USA", "UK", "Canada"];
+const MAX_UPLOAD_FILE_SIZE_MB = 150;
+const MAX_UPLOAD_FILE_SIZE_BYTES = MAX_UPLOAD_FILE_SIZE_MB * 1024 * 1024;
 
 const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
   const tabOrder = ["1", "2", "3", "4"];
@@ -78,6 +80,15 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
       }
       return tabOrder[currentIndex + 1];
     });
+  };
+
+  const handleBeforeUpload = (file) => {
+    if (file?.size > MAX_UPLOAD_FILE_SIZE_BYTES) {
+      message.error(`Each file must be ${MAX_UPLOAD_FILE_SIZE_MB}MB or smaller`);
+      return Upload.LIST_IGNORE;
+    }
+
+    return false;
   };
 
   useEffect(() => {
@@ -282,7 +293,10 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
             uploadedDocuments = [...uploadedDocuments, ...uploadResponse.data.data];
           }
         } catch (uploadError) {
-          const errorMessage = uploadError?.response?.data?.message || 'Failed to upload documents';
+          const statusCode = uploadError?.response?.status;
+          const errorMessage = statusCode === 413
+            ? 'Upload too large for server limit. Please upload fewer/smaller files.'
+            : uploadError?.response?.data?.message || 'Failed to upload documents';
           message.error(errorMessage);
           console.error('Upload error:', uploadError);
           return;
@@ -920,7 +934,7 @@ const EditEmployeeModal = ({ open, onCancel, onSuccess, employee }) => {
             <Upload
               fileList={fileList}
               onChange={({ fileList: newFileList }) => setFileList(newFileList)}
-              beforeUpload={() => false}
+              beforeUpload={handleBeforeUpload}
               multiple
               maxCount={100}
               listType="picture"
